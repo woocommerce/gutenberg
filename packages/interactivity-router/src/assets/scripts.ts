@@ -1,3 +1,8 @@
+/**
+ * External dependencies
+ */
+import { importWithMap } from 'dynamic-importmap';
+
 const preloaded = new Set< string >();
 
 export const preloadModules = ( doc: Document ) => {
@@ -21,5 +26,5 @@ export const preloadModules = ( doc: Document ) => {
 	return moduleUrls;
 };
 
-export const importModules = ( moduleUrls: string[] ) =>
-	moduleUrls.map( ( url ) => import( /* webpackIgnore: true */ url ) );
+export const importModules = ( moduleUrls: string[], importMap: any ) =>
+	moduleUrls.map( ( url ) => importWithMap( url, importMap ) );

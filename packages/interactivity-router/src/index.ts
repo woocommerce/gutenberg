@@ -51,6 +51,7 @@ interface Page {
 	scriptModules: string[];
 	title: string;
 	initialData: any;
+	importMap: any;
 }
 
 type RegionsToVdom = ( dom: Document, params?: VdomParams ) => Page;
@@ -112,7 +113,21 @@ const regionsToVdom: RegionsToVdom = ( dom, { vdom, url } = {} ) => {
 	}
 	const title = dom.querySelector( 'title' )?.innerText;
 	const initialData = parseServerData( dom );
-	return { regions, styles, scriptModules, title, initialData, url };
+	const importMap = JSON.parse(
+		dom.querySelector< HTMLScriptElement >(
+			'script#wp-importmap[type=importmap]'
+		).text
+	);
+
+	return {
+		url,
+		regions,
+		styles,
+		scriptModules,
+		title,
+		initialData,
+		importMap,
+	};
 };
 
 // Render all interactive regions contained in the given page.
@@ -120,7 +135,7 @@ const renderRegions = async ( page: Page ) => {
 	// Wait for styles and modules to be ready.
 	await Promise.all( [
 		...page.styles,
-		...importModules( page.scriptModules ),
+		...importModules( page.scriptModules, page.importMap ),
 	] );
 	// Replace style sheets.
 	const styles = await Promise.all( page.styles );
