@@ -310,70 +310,18 @@ const pageBaseUrl = baseUrl;
 const createBlob = ( source, type = 'text/javascript' ) =>
 	URL.createObjectURL( new Blob( [ source ], { type } ) );
 
-let dynamicImport = ! hasDocument && ( 0, eval )( 'u=>import(u)' );
+let dynamicImport = ( u ) => import( /* webpackIgnore: true */ u );
 
 let supportsDynamicImport;
 
-const dynamicImportCheck =
-	hasDocument &&
-	new Promise( ( resolve ) => {
-		const s = Object.assign( document.createElement( 'script' ), {
-			src: createBlob( 'self._d=u=>import(u)' ),
-			ep: true,
-		} );
-		s.setAttribute( 'nonce', nonce );
-		s.addEventListener( 'load', () => {
-			if (
-				! ( supportsDynamicImport = !! ( dynamicImport = self._d ) )
-			) {
-				let err;
-				window.addEventListener( 'error', ( _err ) => ( err = _err ) );
-				dynamicImport = ( url, opts ) =>
-					new Promise( ( resolve, reject ) => {
-						const s = Object.assign(
-							document.createElement( 'script' ),
-							{
-								type: 'module',
-								src: createBlob(
-									`import*as m from'${ url }';self._esmsi=m`
-								),
-							}
-						);
-						err = undefined;
-						s.ep = true;
-						if ( nonce ) s.setAttribute( 'nonce', nonce );
-						// Safari is unique in supporting module script error events
-						s.addEventListener( 'error', cb );
-						s.addEventListener( 'load', cb );
-						function cb( _err ) {
-							document.head.removeChild( s );
-							if ( self._esmsi ) {
-								resolve( self._esmsi, baseUrl );
-								self._esmsi = undefined;
-							} else {
-								reject(
-									( ! ( _err instanceof Event ) && _err ) ||
-										( err && err.error ) ||
-										new Error(
-											`Error loading ${
-												( opts && opts.errUrl ) || url
-											} (${ s.src }).`
-										)
-								);
-								err = undefined;
-							}
-						}
-						document.head.appendChild( s );
-					} );
-			}
-			document.head.removeChild( s );
-			delete self._d;
-			resolve();
-		} );
-		document.head.appendChild( s );
-	} );
+const dynamicImportCheck = hasDocument && Promise.resolve( true );
 
-const skip = undefined;
+const skip = ( id ) =>
+	Object.keys(
+		JSON.parse(
+			document.querySelector( 'script#wp-importmap[type=importmap]' ).text
+		).imports
+	).includes( id );
 
 // TODO: try to remove
 const throwError = ( err ) => {
@@ -529,9 +477,7 @@ const importMapSrcOrLazy = false;
 async function _resolve( id, parentUrl ) {
 	const urlResolved = resolveIfNotPlainOrUrl( id, parentUrl );
 	return {
-		r:
-			resolveImportMap( importMap, urlResolved || id, parentUrl ) ||
-			throwUnresolved( id, parentUrl ),
+		r: resolveImportMap( importMap, urlResolved || id, parentUrl ) || id, // throwUnresolved( id, parentUrl ),
 		// b = bare specifier
 		b: ! urlResolved && ! isURL( id ),
 	};

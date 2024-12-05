@@ -58,6 +58,12 @@ interface Page {
 	importMap: any;
 }
 
+const originalImportMap = JSON.parse(
+	window.document.querySelector< HTMLScriptElement >(
+		'script#wp-importmap[type=importmap]'
+	).text
+);
+
 type RegionsToVdom = ( dom: Document, params?: VdomParams ) => Page;
 
 // Check if the navigation mode is full page or region based.
@@ -122,6 +128,11 @@ const regionsToVdom: RegionsToVdom = ( dom, { vdom, url } = {} ) => {
 			'script#wp-importmap[type=importmap]'
 		).text
 	);
+
+	// Remove duplicated imports.
+	for ( const key in originalImportMap.imports ) {
+		delete importMap.imports[ key ];
+	}
 
 	return {
 		url,
