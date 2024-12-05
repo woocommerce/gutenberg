@@ -7,6 +7,7 @@ import { store, privateApis, getConfig } from '@wordpress/interactivity';
  * Internal dependencies
  */
 import { prepareStyles, applyStyles, type StyleElement } from './assets/styles';
+import { preloadModules, importModules } from './assets/scripts';
 
 const {
 	directivePrefix,
@@ -90,11 +91,7 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 const regionsToVdom: RegionsToVdom = ( dom, { vdom, url } = {} ) => {
 	const regions = { body: undefined };
 	const styles = prepareStyles( dom, url );
-	const scriptModules = [
-		...dom.querySelectorAll< HTMLScriptElement >(
-			'script[type=module][src]'
-		),
-	].map( ( s ) => s.src );
+	const scriptModules = preloadModules( dom );
 
 	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
 		if ( navigationMode === 'fullPage' ) {
@@ -123,9 +120,7 @@ const renderRegions = async ( page: Page ) => {
 	// Wait for styles and modules to be ready.
 	await Promise.all( [
 		...page.styles,
-		...page.scriptModules.map(
-			( src ) => import( /* webpackIgnore: true */ src )
-		),
+		...importModules( page.scriptModules ),
 	] );
 	// Replace style sheets.
 	const styles = await Promise.all( page.styles );
