@@ -26,5 +26,16 @@ export const preloadModules = ( doc: Document ) => {
 	return moduleUrls;
 };
 
+const importedModules = new Set< string >();
+
+export const setModuleAsImported = ( url: string ) => {
+	importedModules.add( url );
+};
+
 export const importModules = ( moduleUrls: string[], importMap: any ) =>
-	moduleUrls.map( ( url ) => importWithMap( url, importMap ) );
+	moduleUrls
+		.filter( ( url ) => ! importedModules.has( url ) )
+		.map( ( url ) => {
+			setModuleAsImported( url );
+			return importWithMap( url, importMap );
+		} );
