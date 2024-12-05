@@ -30,7 +30,7 @@
 	"dependencies": {
 		"@wordpress/a11y": "file:../a11y",
 		"@wordpress/interactivity": "file:../interactivity",
-		"dynamic-importmap": "^0.1.0"
+		"es-module-lexer": "^1.5.4"
 	},
 	"publishConfig": {
 		"access": "public"

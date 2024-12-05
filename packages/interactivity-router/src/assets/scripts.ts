@@ -1,7 +1,7 @@
 /**
- * External dependencies
+ * Internal dependencies
  */
-import { importWithMap } from 'dynamic-importmap';
+import { importWithMap } from './dynamic-importmap';
 
 const preloaded = new Set< string >();
 
