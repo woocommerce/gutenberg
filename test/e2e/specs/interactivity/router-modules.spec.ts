@@ -58,7 +58,7 @@ test.describe( 'Router modules', () => {
 	test( 'should handle modules from new blocks', async ( { page } ) => {
 		const requestedModules = [];
 
-		await page.route( '**/*.js', async ( route ) => {
+		await page.route( '**/*.js*', async ( route ) => {
 			requestedModules.push( route.request().url() );
 			await route.continue();
 		} );
