@@ -9,66 +9,19 @@ import * as lexer from 'es-module-lexer';
 import { fetchModule } from './fetch';
 import { resolve } from './resolver';
 
-interface ModuleLoad {
-	/**
-	 * The module's original URL.
-	 */
-	u?: string;
-
-	/**
-	 * response url
-	 */
-	r?: string;
-
-	/**
-	 * fetchPromise
-	 */
-	f?: Promise< ModuleLoad >;
-
-	/**
-	 * source (source code?)
-	 */
-	S?: string;
-
-	/**
-	 * linkPromise
-	 */
-	L?: Promise< void >;
-
-	/**
-	 * analysis
-	 */
-	a?: ReturnType< typeof lexer.parse >;
-
-	/**
-	 * deps
-	 */
-	d?: ModuleLoad[];
-
-	/**
-	 * blobUrl
-	 */
-	b?: string;
-
-	/**
-	 * shellUrl
-	 */
-	s?: string;
-
-	/**
-	 * needsShim
-	 */
-	n?: boolean;
-
-	/**
-	 * type (unused)
-	 */
-	t?: null;
-
-	/**
-	 * meta
-	 */
-	m?: { url: string; resolve?: undefined };
+export interface ModuleLoad {
+	u?: string; // original URL
+	r?: string; // response url
+	f?: Promise< ModuleLoad >; // fetch promise
+	S?: string; // source code
+	L?: Promise< void >; // link-promise (dependency fetch)
+	a?: ReturnType< typeof lexer.parse >; // analysis ([ imports, exports, ... ])
+	d?: ModuleLoad[]; // deps
+	b?: string; // blobUrl
+	s?: string; // shellUrl for circular references
+	n?: boolean; // needsShim
+	t?: null; // type (unused)
+	m?: { url: string; resolve?: undefined }; // meta
 }
 
 export const initPromise = Promise.resolve( lexer.init );
@@ -87,17 +40,14 @@ const skip = ( id ) =>
 	).includes( id );
 
 const supports = window.HTMLScriptElement.supports;
-
 const supportsImportMaps =
 	supports && supports.name === 'supports' && supports( 'importmap' );
-
 const importMapSrcOrLazy = false;
 
 const fetchCache = {};
-
 export const registry = {};
 
-async function loadAll( load, seen ) {
+async function loadAll( load: ModuleLoad, seen: Record< string, any > ) {
 	if ( load.b || seen[ load.u ] ) {
 		return;
 	}
@@ -109,15 +59,15 @@ async function loadAll( load, seen ) {
 	}
 }
 
-function urlJsString( url ) {
+function urlJsString( url: string ) {
 	return `'${ url.replace( /'/g, "\\'" ) }'`;
 }
 
-const createBlob = ( source, type = 'text/javascript' ) =>
+const createBlob = ( source: string, type = 'text/javascript' ) =>
 	URL.createObjectURL( new Blob( [ source ], { type } ) );
 
 let lastLoad;
-function resolveDeps( load, seen ) {
+function resolveDeps( load: ModuleLoad, seen: Record< string, any > ) {
 	if ( load.b || ! seen[ load.u ] ) {
 		return;
 	}
@@ -128,25 +78,23 @@ function resolveDeps( load, seen ) {
 	}
 
 	const [ imports, exports ] = load.a;
-
-	// "execution"
 	const source = load.S;
 
-	// edge doesnt execute sibling in order, so we fix this up by ensuring all previous executions are explicit dependencies
+	// Edge fix: ensure sibling ordering
 	let resolvedSource = edge && lastLoad ? `import '${ lastLoad }';` : '';
 
 	if ( ! imports.length ) {
 		resolvedSource += source;
 	} else {
-		// once all deps have loaded we can inline the dependency resolution blobs
-		// and define this blob
 		let lastIndex = 0;
 		let depIndex = 0;
 		const dynamicImportEndStack = [];
-		function pushStringTo( originalIndex ) {
+
+		function pushStringTo( originalIndex: number ) {
 			while (
+				dynamicImportEndStack.length &&
 				dynamicImportEndStack[ dynamicImportEndStack.length - 1 ] <
-				originalIndex
+					originalIndex
 			) {
 				const dynamicImportEnd = dynamicImportEndStack.pop();
 				resolvedSource += `${ source.slice(
@@ -158,19 +106,20 @@ function resolveDeps( load, seen ) {
 			resolvedSource += source.slice( lastIndex, originalIndex );
 			lastIndex = originalIndex;
 		}
+
 		for ( const {
 			s: start,
 			ss: statementStart,
 			se: statementEnd,
 			d: dynamicImportIndex,
 		} of imports ) {
-			// dependency source replacements
+			// static import
 			if ( dynamicImportIndex === -1 ) {
 				const depLoad = load.d[ depIndex++ ];
 				let blobUrl = depLoad.b;
 				const cycleShell = ! blobUrl;
 				if ( cycleShell ) {
-					// circular shell creation
+					// Circular shell creation
 					if ( ! ( blobUrl = depLoad.s ) ) {
 						blobUrl = depLoad.s = createBlob(
 							`export function u$_(m){${ depLoad.a[ 1 ]
@@ -220,7 +169,7 @@ function resolveDeps( load, seen ) {
 			}
 			// import.meta
 			else if ( dynamicImportIndex === -2 ) {
-				load.m = { url: load.r, resolve: undefined };
+				load.m = { url: load.r };
 				pushStringTo( start );
 				resolvedSource += `importShim._r[${ urlJsString( load.u ) }].m`;
 				lastIndex = statementEnd;
@@ -234,7 +183,7 @@ function resolveDeps( load, seen ) {
 			}
 		}
 
-		// support progressive cycle binding updates (try statement avoids tdz errors)
+		// progressive cycle binding updates
 		if ( load.s ) {
 			resolvedSource += `\n;import{u$_}from'${
 				load.s
@@ -247,63 +196,58 @@ function resolveDeps( load, seen ) {
 		pushStringTo( source.length );
 	}
 
+	// ensure we have a proper sourceURL
 	let hasSourceURL = false;
 	resolvedSource = resolvedSource.replace(
 		sourceMapURLRegEx,
-		( match, isMapping, url ) => (
-			( hasSourceURL = ! isMapping ),
-			match.replace( url, () => new URL( url, load.r ).toString() )
-		)
+		( match, isMapping, url ) => {
+			hasSourceURL = ! isMapping;
+			return match.replace( url, () =>
+				new URL( url, load.r ).toString()
+			);
+		}
 	);
 	if ( ! hasSourceURL ) {
 		resolvedSource += '\n//# sourceURL=' + load.r;
 	}
 
 	load.b = lastLoad = createBlob( resolvedSource );
-	load.S = undefined;
+	load.S = undefined; // free memory
 }
 
-// ; and // trailer support added for Ruby on Rails 7 source maps compatibility
-// https://github.com/guybedford/es-module-shims/issues/228
 const sourceMapURLRegEx =
 	/\n\/\/# source(Mapping)?URL=([^\n]+)\s*((;|\/\/[^#][^\n]*)\s*)*$/;
 
-function getOrCreateLoad( url, fetchOpts, parent ) {
+function getOrCreateLoad(
+	url: string,
+	fetchOpts: any,
+	parent: string
+): ModuleLoad {
 	let load: ModuleLoad = registry[ url ];
 	if ( load ) {
 		return load;
 	}
 
 	load = {
-		// url
 		u: url,
-		// response url
 		r: undefined,
-		// fetchPromise
 		f: undefined,
-		// source
 		S: undefined,
-		// linkPromise
 		L: undefined,
-		// analysis
 		a: undefined,
-		// deps
 		d: undefined,
-		// blobUrl
 		b: undefined,
-		// shellUrl
 		s: undefined,
-		// needsShim
 		n: false,
-		// type
 		t: null,
-		// meta
 		m: null,
 	};
+
 	if ( registry[ url ] ) {
+		// If there's a naming conflict, keep incrementing until unique
 		let i = 0;
 		while ( registry[ load.u + ++i ] ) {
-			// Eing?
+			/* no-op */
 		}
 		load.u += i;
 	}
@@ -340,12 +284,14 @@ function getOrCreateLoad( url, fetchOpts, parent ) {
 						return undefined;
 					}
 					if ( skip && skip( r ) ) {
-						return { b: r };
+						return { b: r } as ModuleLoad;
 					}
+					// remove integrity for child fetches
 					if ( childFetchOpts.integrity ) {
-						childFetchOpts = Object.assign( {}, childFetchOpts, {
+						childFetchOpts = {
+							...childFetchOpts,
 							integrity: undefined,
-						} );
+						};
 					}
 					return getOrCreateLoad( r, childFetchOpts, load.r ).f;
 				} )
@@ -356,22 +302,52 @@ function getOrCreateLoad( url, fetchOpts, parent ) {
 	return load;
 }
 
-export async function topLevelLoad( url, fetchOpts ) {
+const dynamicImport = ( u: string ) => import( /* webpackIgnore: true */ u );
+
+/*
+ * NEW FUNCTION 1:
+ * Preload the module (and all of its static dependencies),
+ * but do NOT perform a final `import()` yet.
+ */
+export async function preloadModule(
+	url: string,
+	fetchOpts?: any
+): Promise< ModuleLoad > {
 	await initPromise;
 	const load = getOrCreateLoad( url, fetchOpts, null );
 	const seen = {};
 	await loadAll( load, seen );
 	lastLoad = undefined;
 	resolveDeps( load, seen );
-	await Promise.resolve(); // Is this necessary?
+	// microtask scheduling – can help ensure Blob is fully ready
+	await Promise.resolve();
+	return load;
+}
+
+/*
+ * NEW FUNCTION 2:
+ * Once a `ModuleLoad` is preloaded, actually do the dynamic import.
+ */
+export async function importPreloadedModule(
+	load: ModuleLoad
+): Promise< any > {
 	const module = await dynamicImport( load.b );
-	// if the top-level load is a shell, run its update function
+	// if the preloaded module ended up with a shell (circular refs), finalize it
 	if ( load.s ) {
 		( await dynamicImport( load.s ) ).u$_( module );
 	}
-	// when tla is supported, this should return the tla promise as an actual handle
-	// so readystate can still correspond to the sync subgraph exec completions
 	return module;
 }
 
-const dynamicImport = ( u ) => import( /* webpackIgnore: true */ u );
+/*
+ * Original top-level load, now uses the two-step process internally
+ */
+export async function topLevelLoad(
+	url: string,
+	fetchOpts?: any
+): Promise< any > {
+	// Step 1: preload
+	const load = await preloadModule( url, fetchOpts );
+	// Step 2: import
+	return importPreloadedModule( load );
+}
