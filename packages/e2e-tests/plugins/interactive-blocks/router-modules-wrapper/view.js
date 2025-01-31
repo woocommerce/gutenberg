@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { store } from '@wordpress/interactivity';
+import { store, getElement } from '@wordpress/interactivity';
 
 const { state } = store( 'test/router-modules', {
 	state: {
@@ -16,6 +16,13 @@ const { state } = store( 'test/router-modules', {
 			);
 			yield actions.navigate( e.target.href );
 			state.clientSideNavigation = true;
+		},
+		*prefetch() {
+			const { ref } = getElement();
+			const { actions } = yield import(
+				'@wordpress/interactivity-router'
+			);
+			yield actions.prefetch( ref.href );
 		},
 		pushName( name ) {
 			state.names.push( name );
