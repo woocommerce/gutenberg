@@ -9,6 +9,68 @@ import * as lexer from 'es-module-lexer';
 import { fetchModule } from './fetch';
 import { resolve } from './resolver';
 
+interface ModuleLoad {
+	/**
+	 * The module's original URL.
+	 */
+	u?: string;
+
+	/**
+	 * response url
+	 */
+	r?: string;
+
+	/**
+	 * fetchPromise
+	 */
+	f?: Promise< ModuleLoad >;
+
+	/**
+	 * source (source code?)
+	 */
+	S?: string;
+
+	/**
+	 * linkPromise
+	 */
+	L?: Promise< void >;
+
+	/**
+	 * analysis
+	 */
+	a?: ReturnType< typeof lexer.parse >;
+
+	/**
+	 * deps
+	 */
+	d?: ModuleLoad[];
+
+	/**
+	 * blobUrl
+	 */
+	b?: string;
+
+	/**
+	 * shellUrl
+	 */
+	s?: string;
+
+	/**
+	 * needsShim
+	 */
+	n?: boolean;
+
+	/**
+	 * type (unused)
+	 */
+	t?: null;
+
+	/**
+	 * meta
+	 */
+	m?: { url: string; resolve?: undefined };
+}
+
 export const initPromise = Promise.resolve( lexer.init );
 
 const edge =
@@ -207,7 +269,7 @@ const sourceMapURLRegEx =
 	/\n\/\/# source(Mapping)?URL=([^\n]+)\s*((;|\/\/[^#][^\n]*)\s*)*$/;
 
 function getOrCreateLoad( url, fetchOpts, parent ) {
-	let load = registry[ url ];
+	let load: ModuleLoad = registry[ url ];
 	if ( load ) {
 		return load;
 	}
@@ -256,7 +318,7 @@ function getOrCreateLoad( url, fetchOpts, parent ) {
 		} catch ( e ) {
 			// eslint-disable-next-line no-console
 			console.error( e );
-			load.a = [ [], [], false ];
+			load.a = [ [], [], false, false ];
 		}
 		load.S = source;
 		return load;
@@ -268,14 +330,14 @@ function getOrCreateLoad( url, fetchOpts, parent ) {
 			await Promise.all(
 				load.a[ 0 ].map( async ( { n, d } ) => {
 					if ( d !== -1 || ! n ) {
-						return;
+						return undefined;
 					}
 					const { r, b } = await resolve( n, load.r || load.u );
 					if ( b && ( ! supportsImportMaps || importMapSrcOrLazy ) ) {
 						load.n = true;
 					}
 					if ( d !== -1 ) {
-						return;
+						return undefined;
 					}
 					if ( skip && skip( r ) ) {
 						return { b: r };
