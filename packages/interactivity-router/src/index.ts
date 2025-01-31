@@ -11,7 +11,9 @@ import {
 	preloadModules,
 	importModules,
 	setModuleAsImported,
+	setModuleAsPreloaded,
 } from './assets/scripts';
+import { type ModuleLoad } from './assets/dynamic-importmap';
 
 const {
 	directivePrefix,
@@ -52,7 +54,7 @@ interface Page {
 	url: string;
 	regions: Record< string, any >;
 	styles: Promise< StyleElement >[];
-	scriptModules: string[];
+	scriptModules: Promise< ModuleLoad >[];
 	title: string;
 	initialData: any;
 	importMap: any;
@@ -102,7 +104,17 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 const regionsToVdom: RegionsToVdom = ( dom, { vdom, url } = {} ) => {
 	const regions = { body: undefined };
 	const styles = prepareStyles( dom, url );
-	const scriptModules = preloadModules( dom );
+	const importMap = JSON.parse(
+		dom.querySelector< HTMLScriptElement >(
+			'script#wp-importmap[type=importmap]'
+		).text
+	);
+
+	// Remove duplicated imports.
+	for ( const key in originalImportMap.imports ) {
+		delete importMap.imports[ key ];
+	}
+	const scriptModules = preloadModules( dom, importMap );
 
 	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
 		if ( navigationMode === 'fullPage' ) {
@@ -123,16 +135,6 @@ const regionsToVdom: RegionsToVdom = ( dom, { vdom, url } = {} ) => {
 	}
 	const title = dom.querySelector( 'title' )?.innerText;
 	const initialData = parseServerData( dom );
-	const importMap = JSON.parse(
-		dom.querySelector< HTMLScriptElement >(
-			'script#wp-importmap[type=importmap]'
-		).text
-	);
-
-	// Remove duplicated imports.
-	for ( const key in originalImportMap.imports ) {
-		delete importMap.imports[ key ];
-	}
 
 	return {
 		url,
@@ -148,10 +150,12 @@ const regionsToVdom: RegionsToVdom = ( dom, { vdom, url } = {} ) => {
 // Render all interactive regions contained in the given page.
 const renderRegions = async ( page: Page ) => {
 	// Wait for styles and modules to be ready.
-	await Promise.all( [
-		...page.styles,
-		...importModules( page.scriptModules, page.importMap ),
-	] );
+	await Promise.all( [ ...page.styles, ...page.scriptModules ] );
+
+	// Import modules
+	const modules = await Promise.all( page.scriptModules );
+	await importModules( modules );
+
 	// Replace style sheets.
 	const styles = await Promise.all( page.styles );
 	applyStyles( styles );
@@ -219,7 +223,10 @@ window.addEventListener( 'popstate', async () => {
 // region based navigation as well.
 window.document
 	.querySelectorAll< HTMLScriptElement >( 'script[type=module][src]' )
-	.forEach( ( { src } ) => setModuleAsImported( src ) );
+	.forEach( ( { src } ) => {
+		setModuleAsPreloaded( src );
+		setModuleAsImported( src );
+	} );
 pages.set(
 	getPagePath( window.location.href ),
 	Promise.resolve(
