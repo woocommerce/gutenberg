@@ -14,11 +14,11 @@ export const preloadModules = ( doc: Document ) => {
 
 	moduleUrls.forEach( ( url ) => {
 		if ( ! preloaded.has( url ) ) {
-			// add the <link> elements to prefetch the module scripts
-			const link = window.document.createElement( 'link' );
-			link.rel = 'modulepreload';
-			link.href = url;
-			window.document.head.append( link );
+			// // add the <link> elements to prefetch the module scripts
+			// const link = window.document.createElement( 'link' );
+			// link.rel = 'modulepreload';
+			// link.href = url;
+			// window.document.head.append( link );
 			preloaded.add( url );
 		}
 	} );
