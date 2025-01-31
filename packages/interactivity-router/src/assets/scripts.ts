@@ -7,6 +7,7 @@ import {
 	type ModuleLoad,
 } from './dynamic-importmap';
 
+// TODO: choose a better name, as this should only contain the modules loaded on the initial page.
 const preloadedModules = new Set< string >();
 
 export const setModuleAsPreloaded = ( url: string ) => {
@@ -22,10 +23,7 @@ export const preloadModules = ( doc: Document, importMap: any ) => {
 
 	return moduleUrls
 		.filter( ( url ) => ! preloadedModules.has( url ) )
-		.map( ( url ) => {
-			setModuleAsPreloaded( url );
-			return preloadWithMap( url, importMap );
-		} );
+		.map( ( url ) => preloadWithMap( url, importMap ) );
 };
 
 const importedModules = new Set< string >();
