@@ -1,18 +1,18 @@
-/* eslint-disable eslint-comments/disable-enable-pair */
-/* eslint-disable eslint-comments/no-unlimited-disable */
-/* eslint-disable */
-
 /**
  * Internal dependencies
  */
 import { addImportMap, resolve } from './resolver';
 import { initPromise, registry, topLevelLoad, preloadModule } from './loader';
 
-// TODO(mark): what is this used for?
+// TODO: check if this baseURI should change per document, and so
+// it need to be passed as a parameter to methods like `importWithMap`
+// and `preloadWithMap`.
 const baseUrl = document.baseURI;
 const pageBaseUrl = baseUrl;
 
-( self as any ).importShim = importShim; // For the import.meta and dynamic import cases.
+// Global property used on `import.meta` cases.
+// TODO: not sure if we need to support that case for now.
+( self as any ).importShim = importShim;
 importShim._r = registry;
 
 async function importShim( id ) {

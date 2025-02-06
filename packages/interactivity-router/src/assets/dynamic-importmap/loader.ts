@@ -20,7 +20,7 @@ export interface ModuleLoad {
 	b?: string; // blobUrl
 	s?: string; // shellUrl for circular references
 	n?: boolean; // needsShim
-	t?: null; // type (unused)
+	t?: string; // type (unused)
 	m?: { url: string; resolve?: undefined }; // meta
 }
 
@@ -220,7 +220,7 @@ const sourceMapURLRegEx =
 
 function getOrCreateLoad(
 	url: string,
-	fetchOpts: any,
+	fetchOpts: RequestInit,
 	parent: string
 ): ModuleLoad {
 	let load: ModuleLoad = registry[ url ];
@@ -304,14 +304,18 @@ function getOrCreateLoad(
 
 const dynamicImport = ( u: string ) => import( /* webpackIgnore: true */ u );
 
-/*
- * NEW FUNCTION 1:
- * Preload the module (and all of its static dependencies),
- * but do NOT perform a final `import()` yet.
+/**
+ * Resolve the passed module URL and fetch the corresponding module
+ * and their dependencies, returning a `ModuleLoad` object once all
+ * of them have been fetched.
+ *
+ * @param url       Module URL.
+ * @param fetchOpts Fetch options.
+ * @return A promise with a `ModuleLoad` instance.
  */
 export async function preloadModule(
 	url: string,
-	fetchOpts?: any
+	fetchOpts?: RequestInit
 ): Promise< ModuleLoad > {
 	await initPromise;
 	const load = getOrCreateLoad( url, fetchOpts, null );
@@ -324,13 +328,15 @@ export async function preloadModule(
 	return load;
 }
 
-/*
- * NEW FUNCTION 2:
- * Once a `ModuleLoad` is preloaded, actually do the dynamic import.
+/**
+ * Import the module represented by the passed `ModuleLoad` instance.
+ *
+ * @param load The `ModuleLoad` instance representing the module.
+ * @return A promise with the imported module.
  */
-export async function importPreloadedModule(
+export async function importPreloadedModule< Module = unknown >(
 	load: ModuleLoad
-): Promise< any > {
+): Promise< Module > {
 	const module = await dynamicImport( load.b );
 	// if the preloaded module ended up with a shell (circular refs), finalize it
 	if ( load.s ) {
@@ -339,15 +345,20 @@ export async function importPreloadedModule(
 	return module;
 }
 
-/*
- * Original top-level load, now uses the two-step process internally
+/**
+ * Import the module represented by the passed module URL.
+ *
+ * The module URL and all its dependencies are resolved using the
+ * current status of the internal dynamic import map.
+ *
+ * @param url       Module URL.
+ * @param fetchOpts Fetch options.
+ * @return A promise with the imported module.
  */
-export async function topLevelLoad(
+export async function topLevelLoad< Module = unknown >(
 	url: string,
-	fetchOpts?: any
-): Promise< any > {
-	// Step 1: preload
+	fetchOpts?: RequestInit
+): Promise< Module > {
 	const load = await preloadModule( url, fetchOpts );
-	// Step 2: import
-	return importPreloadedModule( load );
+	return importPreloadedModule< Module >( load );
 }

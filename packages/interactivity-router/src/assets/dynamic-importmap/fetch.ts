@@ -1,3 +1,8 @@
+/**
+ * Internal dependencies
+ */
+import { type ModuleLoad } from './loader';
+
 // restrict in-flight fetches to a pool of 100
 const p = [];
 let c = 0;
@@ -14,7 +19,7 @@ function popFetchPool() {
 	}
 }
 
-async function doFetch( url, fetchOpts, parent ) {
+async function doFetch( url: string, fetchOpts: RequestInit, parent: string ) {
 	const poolQueue = pushFetchPool();
 	if ( poolQueue ) {
 		await poolQueue;
@@ -48,7 +53,21 @@ function fromParent( parent ) {
 
 const jsContentType = /^(text|application)\/(x-)?javascript(;|$)/;
 
-export async function fetchModule( url, fetchOpts, parent ) {
+/**
+ * Fetch the passed module URL and return the corresponding `ModuleLoad`
+ * instance. If the passed URL does not point to a JS file, the function
+ * throws and error.
+ *
+ * @param url       Module URL.
+ * @param fetchOpts Fetch init options.
+ * @param parent    Parent module URL referencing this URL (if any).
+ * @return Promise with a `ModuleLoad` instance.
+ */
+export async function fetchModule(
+	url: string,
+	fetchOpts: RequestInit,
+	parent: string
+): Promise< ModuleLoad > {
 	const res = await doFetch( url, fetchOpts, parent );
 	const contentType = res.headers.get( 'content-type' );
 	if ( jsContentType.test( contentType ) ) {

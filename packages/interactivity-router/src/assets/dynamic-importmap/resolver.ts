@@ -240,10 +240,22 @@ function resolveAndComposeImportMap( json, baseUrl, parentMap ) {
 
 let importMap = { imports: {}, scopes: {} };
 
+// TODO: check if this baseURI should change per document, and so
+// it need to be passed as a parameter to methods like `resolve`.
 const baseUrl = document.baseURI;
 const pageBaseUrl = baseUrl;
 
-export function addImportMap( importMapIn ) {
+/**
+ * Extend the internal dynamic import map with the passed one.
+ *
+ * @param importMapIn         Import map.
+ * @param importMapIn.imports Imports declaration.
+ * @param importMapIn.scopes  Scopes declaration.
+ */
+export function addImportMap( importMapIn: {
+	imports?: Record< string, string >;
+	scopes?: Record< string, any >;
+} ) {
 	importMap = resolveAndComposeImportMap(
 		importMapIn,
 		pageBaseUrl,
@@ -251,7 +263,15 @@ export function addImportMap( importMapIn ) {
 	);
 }
 
-export async function resolve( id, parentUrl ) {
+/**
+ * Resolve the URL of the passed module ID against the current internal
+ * dynamic import map.
+ *
+ * @param id        Module ID.
+ * @param parentUrl Parent URL, in case the module ID is relative.
+ * @return Resolved module URL.
+ */
+export async function resolve( id: string, parentUrl: string ) {
 	const urlResolved = resolveIfNotPlainOrUrl( id, parentUrl );
 	return {
 		r: resolveImportMap( importMap, urlResolved || id, parentUrl ) || id, // throwUnresolved( id, parentUrl ),
