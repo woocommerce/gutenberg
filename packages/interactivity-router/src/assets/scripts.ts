@@ -7,35 +7,79 @@ import {
 	type ModuleLoad,
 } from './dynamic-importmap';
 
-// TODO: choose a better name, as this should only contain the modules loaded on the initial page.
-const preloadedModules = new Set< string >();
+/**
+ * Script element containing the initial page's import map.
+ */
+const initialImportMapElement =
+	window.document.querySelector< HTMLScriptElement >(
+		'script#wp-importmap[type=importmap]'
+	);
 
-export const setModuleAsPreloaded = ( url: string ) => {
-	preloadedModules.add( url );
+/**
+ * Data from the initial page's import map.
+ *
+ * Pages containing any of the imports present on the original page
+ * in their import maps should ignore them, as those imports would
+ * be handled natively.
+ */
+const initialImportMap = initialImportMapElement
+	? JSON.parse( initialImportMapElement.text )
+	: { imports: {}, scopes: {} };
+
+/**
+ * IDs of modules that should be resolved by the browser rather than
+ * processed internally.
+ */
+const modulesResolvedNatively = new Set< string >();
+
+/**
+ * Mark the specified module as natively resolved.
+ * @param id Module ID.
+ */
+export const setModuleAsNativelyResolved = ( id: string ) => {
+	modulesResolvedNatively.add( id );
 };
 
-export const preloadModules = ( doc: Document, importMap: any ) => {
+/**
+ * Resolve and fetch modules present in the passed document, using the
+ * document's import map to resolve them.
+ *
+ * @param doc Document containing the modules to preload.
+ * @return Array of promises that resolve to a `ModuleLoad` instance.
+ */
+export const preloadModules = ( doc: Document ) => {
+	// Extract the import map from the document.
+	const importMapElement = doc.querySelector< HTMLScriptElement >(
+		'script#wp-importmap[type=importmap]'
+	);
+	const importMap = importMapElement
+		? JSON.parse( importMapElement.text )
+		: { imports: {}, scopes: {} };
+
+	// Remove imports also in the initial page's import map.
+	// Those should be handled natively.
+	for ( const key in initialImportMap.imports ) {
+		delete importMap.imports[ key ];
+	}
+
+	// Get the URL of all modules contained in the document.
 	const moduleUrls = [
 		...doc.querySelectorAll< HTMLScriptElement >(
 			'script[type=module][src]'
 		),
 	].map( ( s ) => s.src );
 
+	// Resolve and fetch those not resolved natively.
 	return moduleUrls
-		.filter( ( url ) => ! preloadedModules.has( url ) )
+		.filter( ( url ) => ! modulesResolvedNatively.has( url ) )
 		.map( ( url ) => preloadWithMap( url, importMap ) );
 };
 
-const importedModules = new Set< string >();
-
-export const setModuleAsImported = ( url: string ) => {
-	importedModules.add( url );
-};
-
+/**
+ * Import modules respresented by the passed `ModuleLoad` instances.
+ *
+ * @param modules Array of `MoudleLoad` instances.
+ * @return Promise that resolves once all modules are imported.
+ */
 export const importModules = ( modules: ModuleLoad[] ) =>
-	modules
-		.filter( ( { u: url } ) => ! importedModules.has( url ) )
-		.map( ( m ) => {
-			setModuleAsImported( m.u );
-			return importPreloadedModule( m );
-		} );
+	Promise.all( modules.map( ( m ) => importPreloadedModule( m ) ) );

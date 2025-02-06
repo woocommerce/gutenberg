@@ -10,8 +10,7 @@ import { prepareStyles, applyStyles, type StyleElement } from './assets/styles';
 import {
 	preloadModules,
 	importModules,
-	setModuleAsImported,
-	setModuleAsPreloaded,
+	setModuleAsNativelyResolved,
 } from './assets/scripts';
 import { type ModuleLoad } from './assets/dynamic-importmap';
 
@@ -57,14 +56,7 @@ interface Page {
 	scriptModules: Promise< ModuleLoad >[];
 	title: string;
 	initialData: any;
-	importMap: any;
 }
-
-const originalImportMap = JSON.parse(
-	window.document.querySelector< HTMLScriptElement >(
-		'script#wp-importmap[type=importmap]'
-	).text
-);
 
 type RegionsToVdom = ( dom: Document, params?: VdomParams ) => Page;
 
@@ -104,17 +96,7 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 const regionsToVdom: RegionsToVdom = ( dom, { vdom, url } = {} ) => {
 	const regions = { body: undefined };
 	const styles = prepareStyles( dom, url );
-	const importMap = JSON.parse(
-		dom.querySelector< HTMLScriptElement >(
-			'script#wp-importmap[type=importmap]'
-		).text
-	);
-
-	// Remove duplicated imports.
-	for ( const key in originalImportMap.imports ) {
-		delete importMap.imports[ key ];
-	}
-	const scriptModules = preloadModules( dom, importMap );
+	const scriptModules = preloadModules( dom );
 
 	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
 		if ( navigationMode === 'fullPage' ) {
@@ -136,15 +118,7 @@ const regionsToVdom: RegionsToVdom = ( dom, { vdom, url } = {} ) => {
 	const title = dom.querySelector( 'title' )?.innerText;
 	const initialData = parseServerData( dom );
 
-	return {
-		url,
-		regions,
-		styles,
-		scriptModules,
-		title,
-		initialData,
-		importMap,
-	};
+	return { url, regions, styles, scriptModules, title, initialData };
 };
 
 // Render all interactive regions contained in the given page.
@@ -223,10 +197,7 @@ window.addEventListener( 'popstate', async () => {
 // region based navigation as well.
 window.document
 	.querySelectorAll< HTMLScriptElement >( 'script[type=module][src]' )
-	.forEach( ( { src } ) => {
-		setModuleAsPreloaded( src );
-		setModuleAsImported( src );
-	} );
+	.forEach( ( { src } ) => setModuleAsNativelyResolved( src ) );
 pages.set(
 	getPagePath( window.location.href ),
 	Promise.resolve(
