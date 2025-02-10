@@ -3,11 +3,17 @@
  */
 import { store } from '@wordpress/interactivity';
 
+/**
+ * External dependencies
+ */
+// eslint-disable-next-line import/no-unresolved
+import name from 'test/router-modules-charlie';
+
 store( 'test/router-modules-charlie', {
 	state: {
-		name: 'charlie',
+		name,
 	},
 } );
 
 const { actions } = store( 'test/router-modules' );
-actions.pushName( 'charlie' );
+actions.pushName( name );

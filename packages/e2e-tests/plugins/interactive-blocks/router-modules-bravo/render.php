@@ -7,6 +7,15 @@
  * @phpcs:disable VariableAnalysis.CodeAnalysis.VariableAnalysis.UndefinedVariable
  */
 
+$module_path = './module.js';
+$module_url  = plugins_url( $module_path, __FILE__ );
+wp_register_script_module(
+	'test/router-modules-bravo',
+	$module_url,
+	array(),
+	filemtime( $module_path )
+);
+
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
 		'data-testid'         => 'bravo-block',
