@@ -1,80 +1,49 @@
-const cssUrlRegEx =
-	/url\(\s*(?:(["'])((?:\\.|[^\n\\"'])+)\1|((?:\\.|[^\s,"'()\\])+))\s*\)/g;
+export type StyleElement = HTMLLinkElement | HTMLStyleElement;
 
-const resolveUrl = ( relativeUrl: string, baseUrl: string ) => {
-	try {
-		return new URL( relativeUrl, baseUrl ).toString();
-	} catch ( e ) {
-		return relativeUrl;
-	}
-};
+const styleSheetCache = new Map< string, Promise< StyleElement >[] >();
 
-const withAbsoluteUrls = ( cssText: string, baseUrl: string ) =>
-	cssText.replace(
-		cssUrlRegEx,
-		( _match, quotes = '', relUrl1, relUrl2 ) =>
-			`url(${ quotes }${ resolveUrl(
-				relUrl1 || relUrl2,
-				baseUrl
-			) }${ quotes })`
-	);
-
-const styleSheetCache = new Map< string, Promise< CSSStyleSheet > >();
-
-const getCachedSheet = async (
-	sheetId: string,
-	factory: () => Promise< CSSStyleSheet >
-) => {
-	if ( ! styleSheetCache.has( sheetId ) ) {
-		styleSheetCache.set( sheetId, factory() );
-	}
-	return styleSheetCache.get( sheetId );
-};
-
-const sheetFromLink = async (
-	{ id, href, sheet: elementSheet }: HTMLLinkElement,
-	baseUrl: string
-) => {
-	const sheetId = id || href;
-	const sheetUrl = resolveUrl( href, baseUrl );
-
-	if ( elementSheet ) {
-		return getCachedSheet( sheetId, () => {
-			const sheet = new CSSStyleSheet();
-			for ( let i = 0; i < elementSheet.cssRules.length; i++ ) {
-				const { cssText } = elementSheet.cssRules[ i ];
-				sheet.insertRule( withAbsoluteUrls( cssText, sheetUrl ), i );
-			}
-			return Promise.resolve( sheet );
-		} );
-	}
-	return getCachedSheet( sheetId, async () => {
-		const response = await fetch( href );
-		const text = await response.text();
-		const sheet = new CSSStyleSheet();
-		await sheet.replace( withAbsoluteUrls( text, sheetUrl ) );
-		return sheet;
-	} );
-};
-
-const sheetFromStyle = async ( { textContent }: HTMLStyleElement ) => {
-	const sheetId = textContent;
-	return getCachedSheet( sheetId, async () => {
-		const sheet = new CSSStyleSheet();
-		await sheet.replace( textContent );
-		return sheet;
-	} );
-};
-
-export const generateCSSStyleSheets = (
+export const prepareStyles = (
 	doc: Document,
-	baseUrl: string = ( doc.location || window.location ).href
-): Promise< CSSStyleSheet >[] =>
-	[ ...doc.querySelectorAll( 'style,link[rel=stylesheet]' ) ].map(
-		( element ) => {
-			if ( 'LINK' === element.nodeName ) {
-				return sheetFromLink( element as HTMLLinkElement, baseUrl );
-			}
-			return sheetFromStyle( element as HTMLStyleElement );
-		}
-	);
+	url: string = ( doc.location || window.location ).href
+): Promise< StyleElement >[] => {
+	if ( ! styleSheetCache.has( url ) ) {
+		const comment = window.document.createComment( url );
+		window.document.head.appendChild( comment );
+		styleSheetCache.set(
+			url,
+			[ ...doc.querySelectorAll( 'style,link[rel=stylesheet]' ) ].map(
+				( element: StyleElement ) => {
+					if ( doc === window.document ) {
+						return Promise.resolve( element );
+					}
+					if ( element instanceof HTMLStyleElement ) {
+						const cloned = element.cloneNode(
+							true
+						) as HTMLStyleElement;
+						window.document.head.appendChild( cloned );
+						cloned.sheet.disabled = true;
+						return Promise.resolve( cloned );
+					}
+					return new Promise( ( resolve, reject ) => {
+						const cloned = element.cloneNode() as StyleElement;
+						cloned.onload = () => {
+							cloned.sheet.disabled = true;
+							resolve( cloned );
+						};
+						cloned.onerror = reject;
+						window.document.head.appendChild( cloned );
+					} );
+				}
+			)
+		);
+	}
+	return styleSheetCache.get( url );
+};
+
+export const applyStyles = async ( styles: StyleElement[] ) => {
+	window.document
+		.querySelectorAll( 'style,link[rel=stylesheet]' )
+		.forEach( ( el: HTMLLinkElement | HTMLStyleElement ) => {
+			el.sheet.disabled = ! styles.includes( el );
+		} );
+};

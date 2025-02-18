@@ -6,7 +6,7 @@ import { store, privateApis, getConfig } from '@wordpress/interactivity';
 /**
  * Internal dependencies
  */
-import { generateCSSStyleSheets } from './assets/styles';
+import { prepareStyles, applyStyles, type StyleElement } from './assets/styles';
 
 const {
 	directivePrefix,
@@ -41,8 +41,9 @@ interface VdomParams {
 }
 
 interface Page {
+	url: string;
 	regions: Record< string, any >;
-	styles: Promise< CSSStyleSheet >[];
+	styles: Promise< StyleElement >[];
 	scriptModules: string[];
 	title: string;
 	initialData: any;
@@ -85,7 +86,7 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 // `router-region` directive.
 const regionsToVdom: RegionsToVdom = ( dom, { vdom, baseUrl } = {} ) => {
 	const regions = { body: undefined };
-	const styles = generateCSSStyleSheets( dom, baseUrl );
+	const styles = prepareStyles( dom, baseUrl );
 	const scriptModules = [
 		...dom.querySelectorAll< HTMLScriptElement >(
 			'script[type=module][src]'
@@ -110,7 +111,7 @@ const regionsToVdom: RegionsToVdom = ( dom, { vdom, baseUrl } = {} ) => {
 	}
 	const title = dom.querySelector( 'title' )?.innerText;
 	const initialData = parseServerData( dom );
-	return { regions, styles, scriptModules, title, initialData };
+	return { regions, styles, scriptModules, title, initialData, url: baseUrl };
 };
 
 // Render all interactive regions contained in the given page.
@@ -123,11 +124,8 @@ const renderRegions = async ( page: Page ) => {
 		),
 	] );
 	// Replace style sheets.
-	const sheets = await Promise.all( page.styles );
-	window.document
-		.querySelectorAll( 'style,link[rel=stylesheet]' )
-		.forEach( ( element ) => element.remove() );
-	window.document.adoptedStyleSheets = sheets;
+	const styles = await Promise.all( page.styles );
+	applyStyles( styles );
 
 	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
 		if ( navigationMode === 'fullPage' ) {
