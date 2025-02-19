@@ -17,6 +17,7 @@ const {
 	parseServerData,
 	populateServerData,
 	batch,
+	initDone,
 } = privateApis(
 	'I acknowledge that using private APIs means my theme or plugin will inevitably break in the next version of WordPress.'
 );
@@ -166,27 +167,30 @@ window.addEventListener( 'popstate', async () => {
 	}
 } );
 
-// Initialize the router and cache the initial page using the initial vDOM.
-// Once this code is tested and more mature, the head should be updated for
-// region based navigation as well.
-if ( globalThis.IS_GUTENBERG_PLUGIN ) {
-	if ( navigationMode === 'fullPage' ) {
-		// Cache the scripts. Has to be called before fetching the assets.
-		[].map.call(
-			document.querySelectorAll( 'script[type="module"][src]' ),
-			( script ) => {
-				headElements.set( script.getAttribute( 'src' ), {
-					tag: script,
-				} );
-			}
-		);
-		await fetchHeadAssets( document );
+( async () => {
+	await initDone;
+	// Initialize the router and cache the initial page using the initial vDOM.
+	// Once this code is tested and more mature, the head should be updated for
+	// region based navigation as well.
+	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
+		if ( navigationMode === 'fullPage' ) {
+			// Cache the scripts. Has to be called before fetching the assets.
+			[].map.call(
+				document.querySelectorAll( 'script[type="module"][src]' ),
+				( script ) => {
+					headElements.set( script.getAttribute( 'src' ), {
+						tag: script,
+					} );
+				}
+			);
+			await fetchHeadAssets( document );
+		}
 	}
-}
-pages.set(
-	getPagePath( window.location.href ),
-	Promise.resolve( regionsToVdom( document, { vdom: initialVdom } ) )
-);
+	pages.set(
+		getPagePath( window.location.href ),
+		Promise.resolve( regionsToVdom( document, { vdom: initialVdom } ) )
+	);
+} )();
 
 // Check if the link is valid for client-side navigation.
 const isValidLink = ( ref: HTMLAnchorElement ) =>
