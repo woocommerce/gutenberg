@@ -51,7 +51,6 @@
 	>not hydrated</p>
 </div>
 
-
 <section>
 	<h2>Region 2</h2>
 	<div
@@ -74,7 +73,7 @@
 			data-wp-on--click="actions.counter.increment"
 		>NaN</button>
 
-		<div data-wp-ignore>
+		<div>
 			<div>
 				<p
 					data-testid="no-region-text-2"
@@ -92,10 +91,11 @@
 						content from page <?php echo $attributes['page']; ?>
 					</p>
 
-					<ul
-						data-wp-interactive="router-regions"
-						data-wp-router-region="nested-region-2"
-					>
+					<button data-testid="add-item" data-wp-on--click="actions.addItem">
+						Add item
+					</button>
+
+					<ul>
 						<template data-wp-each="state.items">
 							<li data-testid="nested-item" data-wp-key="context.item" data-wp-text="context.item"></li>	
 						</template>
@@ -108,3 +108,16 @@
 		</div>
 	</div>
 </section>
+
+<div data-wp-interactive="router-regions">
+	<div data-wp-router-region="invalid-region-1">
+		<p data-testid="invalid-region-text-1">
+			content from page <?php echo $attributes['page']; ?>
+		</p>
+	</div>
+	<div data-wp-interactive="router-regions" data-wp-router-region="invalid-region-2">
+		<p data-testid="invalid-region-text-2">
+			content from page <?php echo $attributes['page']; ?>
+		</p>
+	</div>
+</div>

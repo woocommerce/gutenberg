@@ -45,5 +45,8 @@ const { state } = store( 'router-regions', {
 				}
 			},
 		},
+		addItem() {
+			state.items.push( `item ${ state.items.length + 1 }` );
+		},
 	},
 } );
