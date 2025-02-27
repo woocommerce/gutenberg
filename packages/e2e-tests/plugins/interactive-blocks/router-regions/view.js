@@ -14,6 +14,7 @@ const { state } = store( 'router-regions', {
 		counter: {
 			value: 0,
 		},
+		items: [ 'item 1', 'item 2', 'item 3' ],
 	},
 	actions: {
 		router: {

@@ -89,13 +89,18 @@ test.describe( 'Router regions', () => {
 
 	test( 'can be nested', async ( { page } ) => {
 		const nestedRegionSsr = page.getByTestId( 'nested-region-ssr' );
+		const innerContent = page.getByTestId( 'nested-item' );
+
 		await expect( nestedRegionSsr ).toHaveText( 'content from page 1' );
+		await expect( innerContent ).toHaveCount( 3 );
 
 		await page.getByTestId( 'next' ).click();
 		await expect( nestedRegionSsr ).toHaveText( 'content from page 2' );
+		await expect( innerContent ).toHaveCount( 3 );
 
 		await page.getByTestId( 'back' ).click();
 		await expect( nestedRegionSsr ).toHaveText( 'content from page 1' );
+		await expect( innerContent ).toHaveCount( 3 );
 	} );
 
 	test( 'Page title is updated 2', async ( { page } ) => {

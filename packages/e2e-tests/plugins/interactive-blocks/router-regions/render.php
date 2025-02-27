@@ -11,7 +11,7 @@
 <section>
 	<h2>Region 1</h2>
 	<div
-		data-wp-interactive='{"namespace": "router-regions"}'
+		data-wp-interactive="router-regions"
 		data-wp-router-region="region-1"
 	>
 		<p
@@ -55,7 +55,7 @@
 <section>
 	<h2>Region 2</h2>
 	<div
-		data-wp-interactive='{"namespace": "router-regions"}'
+		data-wp-interactive="router-regions"
 		data-wp-router-region="region-2"
 	>
 		<p
@@ -85,12 +85,24 @@
 			<section>
 				<h2>Nested region</h2>
 				<div
-					data-wp-interactive='{"namespace": "router-regions"}'
+					data-wp-interactive="router-regions"
 					data-wp-router-region="nested-region"
 				>
-					<p
-						data-testid="nested-region-ssr"
-					>content from page <?php echo $attributes['page']; ?></p>
+					<p data-testid="nested-region-ssr">
+						content from page <?php echo $attributes['page']; ?>
+					</p>
+
+					<ul
+						data-wp-interactive="router-regions"
+						data-wp-router-region="nested-region-2"
+					>
+						<template data-wp-each="state.items">
+							<li data-testid="nested-item" data-wp-key="context.item" data-wp-text="context.item"></li>	
+						</template>
+						<li data-testid="nested-item" data-wp-each-child>item 1</li>
+						<li data-testid="nested-item" data-wp-each-child>item 2</li>
+						<li data-testid="nested-item" data-wp-each-child>item 3</li>
+					</ul>
 				</div>
 			</section>
 		</div>
