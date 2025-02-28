@@ -330,7 +330,13 @@ export const { state, actions } = store< Store >( 'core/router', {
 				! page.initialData?.config?.[ 'core/router' ]
 					?.clientNavigationDisabled
 			) {
-				yield renderRegions( page );
+				try {
+					yield renderRegions( page );
+				} catch ( e ) {
+					// eslint-disable-next-line no-console
+					console.warn( e );
+					yield forcePageReload( href );
+				}
 				window.history[
 					options.replace ? 'replaceState' : 'pushState'
 				]( {}, '', href );

@@ -34,7 +34,16 @@ export const prepareStyles = (
 							() => resolve( cloned ),
 							{ once: true }
 						);
-						cloned.addEventListener( 'error', reject );
+						cloned.addEventListener( 'error', ( event ) => {
+							reject(
+								Error(
+									`The style sheet with the following URL failed to load. ${
+										( event.target as HTMLLinkElement ).href
+									}`,
+									{ cause: event }
+								)
+							);
+						} );
 						window.document.head.appendChild( cloned );
 					} );
 				}
