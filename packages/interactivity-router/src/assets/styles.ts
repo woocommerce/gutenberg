@@ -16,21 +16,25 @@ export const prepareStyles = (
 					if ( doc === window.document ) {
 						return Promise.resolve( element );
 					}
-					if ( element instanceof HTMLStyleElement ) {
-						const cloned = element.cloneNode(
-							true
-						) as HTMLStyleElement;
+
+					const cloned = element.cloneNode( true ) as
+						| HTMLStyleElement
+						| HTMLLinkElement;
+
+					cloned.dataset.originalMedia = cloned.media || 'all';
+					cloned.media = 'prefetch';
+
+					if ( cloned instanceof HTMLStyleElement ) {
 						window.document.head.appendChild( cloned );
-						cloned.sheet.disabled = true;
 						return Promise.resolve( cloned );
 					}
 					return new Promise( ( resolve, reject ) => {
-						const cloned = element.cloneNode() as StyleElement;
-						cloned.onload = () => {
-							cloned.sheet.disabled = true;
-							resolve( cloned );
-						};
-						cloned.onerror = reject;
+						cloned.addEventListener(
+							'load',
+							() => resolve( cloned ),
+							{ once: true }
+						);
+						cloned.addEventListener( 'error', reject );
 						window.document.head.appendChild( cloned );
 					} );
 				}
@@ -44,6 +48,12 @@ export const applyStyles = async ( styles: StyleElement[] ) => {
 	window.document
 		.querySelectorAll( 'style,link[rel=stylesheet]' )
 		.forEach( ( el: HTMLLinkElement | HTMLStyleElement ) => {
-			el.sheet.disabled = ! styles.includes( el );
+			if ( styles.includes( el ) ) {
+				const { originalMedia = 'all' } = el.dataset;
+				el.sheet.media.appendMedium( originalMedia );
+				el.sheet.disabled = false;
+			} else {
+				el.sheet.disabled = true;
+			}
 		} );
 };
