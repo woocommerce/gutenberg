@@ -7,8 +7,13 @@ export const prepareStyles = (
 	url: string = ( doc.location || window.location ).href
 ): Promise< StyleElement >[] => {
 	if ( ! styleSheetCache.has( url ) ) {
-		const comment = window.document.createComment( url );
-		window.document.head.appendChild( comment );
+		if ( doc !== window.document ) {
+			window.document.head.appendChild(
+				window.document.createComment(
+					`@wordpress/interactivity-router: prefetched styles for ${ url }`
+				)
+			);
+		}
 		styleSheetCache.set(
 			url,
 			[ ...doc.querySelectorAll( 'style,link[rel=stylesheet]' ) ].map(
@@ -28,27 +33,39 @@ export const prepareStyles = (
 						window.document.head.appendChild( cloned );
 						return Promise.resolve( cloned );
 					}
-					return new Promise( ( resolve, reject ) => {
-						cloned.addEventListener(
-							'load',
-							() => resolve( cloned ),
-							{ once: true }
-						);
-						cloned.addEventListener( 'error', ( event ) => {
-							reject(
-								Error(
-									`The style sheet with the following URL failed to load. ${
-										( event.target as HTMLLinkElement ).href
-									}`,
-									{ cause: event }
-								)
+					const loadPromise = new Promise< HTMLLinkElement >(
+						( resolve, reject ) => {
+							cloned.addEventListener(
+								'load',
+								() => resolve( cloned ),
+								{ once: true }
 							);
-						} );
-						window.document.head.appendChild( cloned );
-					} );
+							cloned.addEventListener( 'error', ( event ) => {
+								reject(
+									Error(
+										`The style sheet with the following URL failed to load. ${
+											( event.target as HTMLLinkElement )
+												.href
+										}`,
+										{ cause: event }
+									)
+								);
+							} );
+						}
+					);
+
+					window.document.head.appendChild( cloned );
+					return loadPromise;
 				}
 			)
 		);
+		if ( doc !== window.document ) {
+			window.document.head.appendChild(
+				window.document.createComment(
+					`@wordpress/interactivity-router: end of prefetched styles`
+				)
+			);
+		}
 	}
 	return styleSheetCache.get( url );
 };
