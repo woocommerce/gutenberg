@@ -44,7 +44,7 @@ export const prepareStyles = (
 	return styleSheetCache.get( url );
 };
 
-export const applyStyles = async ( styles: StyleElement[] ) => {
+export const applyStyles = ( styles: StyleElement[] ) => {
 	window.document
 		.querySelectorAll( 'style,link[rel=stylesheet]' )
 		.forEach( ( el: HTMLLinkElement | HTMLStyleElement ) => {
