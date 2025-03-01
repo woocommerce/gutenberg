@@ -26,8 +26,10 @@ export const prepareStyles = (
 						| HTMLStyleElement
 						| HTMLLinkElement;
 
-					cloned.dataset.originalMedia = cloned.media || 'all';
-					cloned.media = 'prefetch';
+					if ( cloned.media ) {
+						cloned.dataset.originalMedia = cloned.media;
+					}
+					cloned.media = 'preload';
 
 					if ( cloned instanceof HTMLStyleElement ) {
 						window.document.head.appendChild( cloned );
@@ -40,17 +42,19 @@ export const prepareStyles = (
 								() => resolve( cloned ),
 								{ once: true }
 							);
-							cloned.addEventListener( 'error', ( event ) => {
-								reject(
-									Error(
-										`The style sheet with the following URL failed to load. ${
-											( event.target as HTMLLinkElement )
-												.href
-										}`,
-										{ cause: event }
-									)
-								);
-							} );
+							cloned.addEventListener(
+								'error',
+								( event ) => {
+									const { href } =
+										event.target as HTMLLinkElement;
+									reject(
+										Error(
+											`The style sheet with the following URL failed to load. ${ href }`
+										)
+									);
+								},
+								{ once: true }
+							);
 						}
 					);
 
@@ -76,7 +80,7 @@ export const applyStyles = ( styles: StyleElement[] ) => {
 		.forEach( ( el: HTMLLinkElement | HTMLStyleElement ) => {
 			if ( styles.includes( el ) ) {
 				const { originalMedia = 'all' } = el.dataset;
-				el.sheet.media.appendMedium( originalMedia );
+				el.sheet.media.mediaText = originalMedia;
 				el.sheet.disabled = false;
 			} else {
 				el.sheet.disabled = true;
