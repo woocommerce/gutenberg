@@ -50,6 +50,7 @@ export const privateApis = ( lock ): any => {
 			parseServerData,
 			populateServerData,
 			batch,
+			initDone,
 		};
 	}
 
@@ -57,4 +58,4 @@ export const privateApis = ( lock ): any => {
 };
 
 registerDirectives();
-init();
+const initDone = init();
