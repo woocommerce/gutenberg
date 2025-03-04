@@ -1,4 +1,104 @@
+/**
+ * Internal dependencies
+ */
+import { shortestCommonSupersequence } from './scs';
+
 export type StyleElement = HTMLLinkElement | HTMLStyleElement;
+
+const isStyleEqual = ( a: StyleElement, b: StyleElement ): boolean => {
+	if ( a === b ) {
+		return true;
+	}
+
+	const [ normalizedA, normalizedB ] = [ a, b ].map( ( element ) => {
+		if ( element.getAttribute( 'media' ) === 'preload' ) {
+			element = element.cloneNode( true ) as StyleElement;
+			const { originalMedia } = element.dataset;
+			if ( originalMedia ) {
+				element.setAttribute( 'media', originalMedia );
+				element.removeAttribute( 'data-original-media' );
+			} else {
+				element.removeAttribute( 'media' );
+			}
+		}
+		return element;
+	} );
+
+	const result = normalizedA.isEqualNode( normalizedB );
+
+	return result;
+};
+
+export function updateStylesWithSCS(
+	X: StyleElement[],
+	Y: StyleElement[],
+	parent: Element = window.document.head
+) {
+	if ( X.length === 0 ) {
+		return Y.map( ( element ) => {
+			parent.appendChild( element );
+			return prepareStyleElement( element );
+		} );
+	}
+
+	const scs = shortestCommonSupersequence( X, Y, isStyleEqual );
+	const xLength = X.length;
+	const yLength = Y.length;
+	const promises = [];
+	let last = X[ xLength - 1 ];
+	let xIndex = 0;
+	let yIndex = 0;
+
+	for ( const element of scs ) {
+		if ( xIndex < xLength && isStyleEqual( X[ xIndex ], element ) ) {
+			if ( yIndex < yLength && isStyleEqual( Y[ yIndex ], element ) ) {
+				promises.push( Promise.resolve( X[ xIndex ] ) );
+				yIndex++;
+			}
+			xIndex++;
+		} else {
+			const clone = Y[ yIndex ].cloneNode( true ) as StyleElement;
+			promises.push( prepareStyleElement( clone ) );
+			if ( xIndex < xLength ) {
+				X[ xIndex ].before( clone );
+				yIndex++;
+			} else {
+				last.after( clone );
+				last = clone;
+			}
+		}
+	}
+
+	return promises;
+}
+
+const prepareStyleElement = (
+	element: StyleElement
+): Promise< StyleElement > => {
+	if ( element.media ) {
+		element.dataset.originalMedia = element.media;
+	}
+
+	element.media = 'preload';
+
+	if ( element instanceof HTMLStyleElement ) {
+		return Promise.resolve( element );
+	}
+
+	const loadPromise = new Promise< HTMLLinkElement >( ( resolve, reject ) => {
+		element.addEventListener( 'load', () => resolve( element ) );
+		element.addEventListener( 'error', ( event ) => {
+			const { href } = event.target as HTMLLinkElement;
+			reject(
+				Error(
+					`The style sheet with the following URL failed to load. ${ href }`
+				)
+			);
+		} );
+	} );
+
+	return loadPromise;
+};
 
 const styleSheetCache = new Map< string, Promise< StyleElement >[] >();
 
@@ -7,69 +107,22 @@ export const prepareStyles = (
 	url: string = ( doc.location || window.location ).href
 ): Promise< StyleElement >[] => {
 	if ( ! styleSheetCache.has( url ) ) {
-		if ( doc !== window.document ) {
-			window.document.head.appendChild(
-				window.document.createComment(
-					`@wordpress/interactivity-router: prefetched styles for ${ url }`
-				)
-			);
-		}
-		styleSheetCache.set(
-			url,
-			[ ...doc.querySelectorAll( 'style,link[rel=stylesheet]' ) ].map(
-				( element: StyleElement ) => {
-					if ( doc === window.document ) {
-						return Promise.resolve( element );
-					}
-
-					const cloned = element.cloneNode( true ) as
-						| HTMLStyleElement
-						| HTMLLinkElement;
-
-					if ( cloned.media ) {
-						cloned.dataset.originalMedia = cloned.media;
-					}
-					cloned.media = 'preload';
-
-					if ( cloned instanceof HTMLStyleElement ) {
-						window.document.head.appendChild( cloned );
-						return Promise.resolve( cloned );
-					}
-					const loadPromise = new Promise< HTMLLinkElement >(
-						( resolve, reject ) => {
-							cloned.addEventListener(
-								'load',
-								() => resolve( cloned ),
-								{ once: true }
-							);
-							cloned.addEventListener(
-								'error',
-								( event ) => {
-									const { href } =
-										event.target as HTMLLinkElement;
-									reject(
-										Error(
-											`The style sheet with the following URL failed to load. ${ href }`
-										)
-									);
-								},
-								{ once: true }
-							);
-						}
-					);
-
-					window.document.head.appendChild( cloned );
-					return loadPromise;
-				}
+		const currentStyleElements = Array.from(
+			window.document.querySelectorAll< StyleElement >(
+				'style,link[rel=stylesheet]'
 			)
 		);
-		if ( doc !== window.document ) {
-			window.document.head.appendChild(
-				window.document.createComment(
-					`@wordpress/interactivity-router: end of prefetched styles`
-				)
-			);
-		}
+		const newStyleElements = Array.from(
+			doc.querySelectorAll< StyleElement >( 'style,link[rel=stylesheet]' )
+		);
+
+		// Set styles in order.
+		const stylePromises = updateStylesWithSCS(
+			currentStyleElements,
+			newStyleElements
+		);
+
+		styleSheetCache.set( url, stylePromises );
 	}
 	return styleSheetCache.get( url );
 };
