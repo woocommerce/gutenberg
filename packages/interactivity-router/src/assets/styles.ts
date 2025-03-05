@@ -75,7 +75,7 @@ export function updateStylesWithSCS(
 		const yElement = Y[ yIndex ];
 		if ( xIndex < xLength && isStyleEqual( xElement, scsElement ) ) {
 			if ( yIndex < yLength && isStyleEqual( yElement, scsElement ) ) {
-				promises.push( Promise.resolve( xElement ) );
+				promises.push( prepareStylePromise( xElement ) );
 				yIndex++;
 			}
 			xIndex++;
