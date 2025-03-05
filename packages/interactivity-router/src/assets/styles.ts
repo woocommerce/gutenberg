@@ -29,6 +29,27 @@ const isStyleEqual = ( a: StyleElement, b: StyleElement ): boolean => {
 	return result;
 };
 
+/**
+ * Add the minimun style elements from Y around those in X using a
+ * shortest common supersequence algorithm, returning a list of
+ * promises for all the elements in Y.
+ *
+ * If X is empty, it appends all the elements in Y to the passed
+ * parent element or to `document.head` instead.
+ *
+ * The returned promises resolve once the corresponding style element
+ * is loaded and ready. Those elements that are also in X return a
+ * cached promise.
+ *
+ * The algorithm ensures that the final style elements present in the
+ * document (or the passed `parent` element) are in the correct order
+ * and they are included in either X or Y.
+ *
+ * @param X      Base list of style elements.
+ * @param Y      List of style elements.
+ * @param parent Optional parent element to append to the new style elements.
+ * @return List of promises that resolve once the elements in Y are ready.
+ */
 export function updateStylesWithSCS(
 	X: StyleElement[],
 	Y: StyleElement[],
@@ -37,7 +58,7 @@ export function updateStylesWithSCS(
 	if ( X.length === 0 ) {
 		return Y.map( ( element ) => {
 			parent.appendChild( element );
-			return prepareStyleElement( element );
+			return prepareStylePromise( element );
 		} );
 	}
 
@@ -49,22 +70,23 @@ export function updateStylesWithSCS(
 	let xIndex = 0;
 	let yIndex = 0;
 
-	for ( const element of scs ) {
-		if ( xIndex < xLength && isStyleEqual( X[ xIndex ], element ) ) {
-			if ( yIndex < yLength && isStyleEqual( Y[ yIndex ], element ) ) {
-				promises.push( Promise.resolve( X[ xIndex ] ) );
+	for ( const scsElement of scs ) {
+		const xElement = X[ xIndex ];
+		const yElement = Y[ yIndex ];
+		if ( xIndex < xLength && isStyleEqual( xElement, scsElement ) ) {
+			if ( yIndex < yLength && isStyleEqual( yElement, scsElement ) ) {
+				promises.push( Promise.resolve( xElement ) );
 				yIndex++;
 			}
 			xIndex++;
 		} else {
-			const clone = Y[ yIndex ].cloneNode( true ) as StyleElement;
-			promises.push( prepareStyleElement( clone ) );
+			promises.push( prepareStylePromise( yElement ) );
 			if ( xIndex < xLength ) {
-				X[ xIndex ].before( clone );
+				xElement.before( yElement );
 				yIndex++;
 			} else {
-				last.after( clone );
-				last = clone;
+				last.after( yElement );
+				last = yElement;
 			}
 		}
 	}
@@ -72,9 +94,24 @@ export function updateStylesWithSCS(
 	return promises;
 }
 
-const prepareStyleElement = (
+const stylePromiseCache = new WeakMap<
+	StyleElement,
+	Promise< StyleElement >
+>();
+
+const prepareStylePromise = (
 	element: StyleElement
 ): Promise< StyleElement > => {
+	if ( stylePromiseCache.has( element ) ) {
+		return stylePromiseCache.get( element );
+	}
+
+	if ( element.sheet ) {
+		const promise = Promise.resolve( element );
+		stylePromiseCache.set( element, promise );
+		return promise;
+	}
+
 	if ( element.media ) {
 		element.dataset.originalMedia = element.media;
 	}
@@ -82,10 +119,12 @@ const prepareStyleElement = (
 	element.media = 'preload';
 
 	if ( element instanceof HTMLStyleElement ) {
-		return Promise.resolve( element );
+		const promise = Promise.resolve( element );
+		stylePromiseCache.set( element, promise );
+		return promise;
 	}
 
-	const loadPromise = new Promise< HTMLLinkElement >( ( resolve, reject ) => {
+	const promise = new Promise< HTMLLinkElement >( ( resolve, reject ) => {
 		element.addEventListener( 'load', () => resolve( element ) );
 		element.addEventListener( 'error', ( event ) => {
 			const { href } = event.target as HTMLLinkElement;
@@ -97,7 +136,8 @@ const prepareStyleElement = (
 		} );
 	} );
 
-	return loadPromise;
+	stylePromiseCache.set( element, promise );
+	return promise;
 };
 
 const styleSheetCache = new Map< string, Promise< StyleElement >[] >();
