@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { shortestCommonSupersequence } from '../../scs';
+import { shortestCommonSupersequence } from '../scs';
 
 describe( 'shortestCommonSupersequence', () => {
 	// BASIC FUNCTIONALITY TESTS
@@ -368,13 +368,4 @@ function isSubsequence( arr, superseq ) {
 	}
 
 	return i === arr.length;
-}
-
-function findLastIndex( arr, predicate ) {
-	for ( let i = arr.length - 1; i >= 0; i-- ) {
-		if ( predicate( arr[ i ] ) ) {
-			return i;
-		}
-	}
-	return -1;
 }
