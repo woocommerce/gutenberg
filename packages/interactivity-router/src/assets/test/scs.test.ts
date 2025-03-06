@@ -3,8 +3,31 @@
  */
 import { shortestCommonSupersequence } from '../scs';
 
+/**
+ * Check the passed array is a contained sequence of the given
+ * supersequence.
+ * @param arr      Array.
+ * @param superseq Supersequence.
+ * @param isEqual  Optional comparator.
+ * @return True if the passed array is contained. False otherwise.
+ */
+function isSubsequence(
+	arr: unknown[],
+	superseq: unknown[],
+	isEqual = ( a: unknown, b: unknown ): boolean => a === b
+) {
+	let i = 0;
+	let j = 0;
+	while ( i < arr.length && j < superseq.length ) {
+		if ( isEqual( arr[ i ], superseq[ j ] ) ) {
+			i++;
+		}
+		j++;
+	}
+	return i === arr.length;
+}
+
 describe( 'shortestCommonSupersequence', () => {
-	// BASIC FUNCTIONALITY TESTS
 	describe( 'Basic functionality', () => {
 		it( 'should handle empty arrays', () => {
 			// Both arrays empty
@@ -26,12 +49,6 @@ describe( 'shortestCommonSupersequence', () => {
 			expect( shortestCommonSupersequence( X, Y ) ).toEqual( [
 				1, 2, 3,
 			] );
-
-			// Should be the same reference from X when elements are identical
-			const result = shortestCommonSupersequence( X, Y );
-			expect( result[ 0 ] ).toBe( X[ 0 ] );
-			expect( result[ 1 ] ).toBe( X[ 1 ] );
-			expect( result[ 2 ] ).toBe( X[ 2 ] );
 		} );
 
 		it( 'should handle simple cases with partial overlap', () => {
@@ -74,13 +91,9 @@ describe( 'shortestCommonSupersequence', () => {
 			const Y = [ 4, 5, 6 ];
 			const result = shortestCommonSupersequence( X, Y );
 
-			// Result should contain all elements from both X and Y
-			expect( result ).toContain( 1 );
-			expect( result ).toContain( 2 );
-			expect( result ).toContain( 3 );
-			expect( result ).toContain( 4 );
-			expect( result ).toContain( 5 );
-			expect( result ).toContain( 6 );
+			// Test that it's a valid supersequence of both arrays
+			expect( isSubsequence( X, result ) ).toBe( true );
+			expect( isSubsequence( Y, result ) ).toBe( true );
 
 			// Result length should be X.length + Y.length
 			expect( result.length ).toBe( X.length + Y.length );
@@ -92,13 +105,11 @@ describe( 'shortestCommonSupersequence', () => {
 			const Y = [ 2, 3, 4 ];
 			const result = shortestCommonSupersequence( X, Y );
 
-			// Result should be [1,2,3,4] with length 4, shorter than X.length + Y.length = 6
 			expect( result.length ).toBe( 4 );
 			expect( result ).toEqual( [ 1, 2, 3, 4 ] );
 		} );
 	} );
 
-	// EDGE CASES
 	describe( 'Edge cases', () => {
 		it( 'should handle subsequence cases', () => {
 			// X is a subsequence of Y
@@ -146,12 +157,9 @@ describe( 'shortestCommonSupersequence', () => {
 				[ 2, 1, 2, 1 ]
 			);
 
-			// Result should preserve order and contain all elements
-			expect( result.length ).toBeLessThanOrEqual( 8 ); // Maximum length would be 8
-
-			// Verify it's a valid supersequence by checking subsequences
 			expect( isSubsequence( [ 1, 2, 1, 2 ], result ) ).toBe( true );
 			expect( isSubsequence( [ 2, 1, 2, 1 ], result ) ).toBe( true );
+			expect( result.length ).toBe( 5 );
 		} );
 
 		it( 'should handle completely duplicate array', () => {
@@ -190,13 +198,16 @@ describe( 'shortestCommonSupersequence', () => {
 			expect( isSubsequence( X, result ) ).toBe( true );
 			expect( isSubsequence( Y, result ) ).toBe( true );
 
-			// The algorithm should produce a result shorter than X.length + Y.length
-			expect( result.length ).toBeLessThanOrEqual( X.length + Y.length );
+			// Verify optimal length
+			expect( result.length ).toBe( 5 );
 
 			// Test reverse case
 			const result2 = shortestCommonSupersequence( Y, X );
 			expect( isSubsequence( X, result2 ) ).toBe( true );
 			expect( isSubsequence( Y, result2 ) ).toBe( true );
+
+			// Verify optimal length
+			expect( result2.length ).toBe( 5 );
 		} );
 
 		it( 'should handle zigzag patterns correctly', () => {
@@ -210,15 +221,9 @@ describe( 'shortestCommonSupersequence', () => {
 
 			// Verify optimal length (should be X.length + Y.length because no common elements)
 			expect( result.length ).toBe( 10 );
-
-			// Verify all elements are present
-			X.concat( Y ).forEach( ( elem ) => {
-				expect( result ).toContain( elem );
-			} );
 		} );
 	} );
 
-	// ADVANCED CASES
 	describe( 'Advanced cases', () => {
 		it( 'should handle complex interleavings', () => {
 			const X = [ 1, 2, 3, 1, 2, 3 ];
@@ -229,8 +234,8 @@ describe( 'shortestCommonSupersequence', () => {
 			expect( isSubsequence( X, result ) ).toBe( true );
 			expect( isSubsequence( Y, result ) ).toBe( true );
 
-			// Result should be shorter than X.length + Y.length
-			expect( result.length ).toBeLessThan( X.length + Y.length );
+			// Verify optimal length
+			expect( result.length ).toBe( 9 );
 		} );
 
 		it( 'should handle almost identical arrays with one difference', () => {
@@ -243,6 +248,10 @@ describe( 'shortestCommonSupersequence', () => {
 
 			// The first 3 elements should be 1,2,3
 			expect( result.slice( 0, 3 ) ).toEqual( [ 1, 2, 3 ] );
+
+			// Test that it's a valid supersequence of both arrays
+			expect( isSubsequence( X, result ) ).toBe( true );
+			expect( isSubsequence( Y, result ) ).toBe( true );
 		} );
 
 		it( 'should handle multiple matching possibilities optimally', () => {
@@ -254,12 +263,11 @@ describe( 'shortestCommonSupersequence', () => {
 			expect( isSubsequence( X, result ) ).toBe( true );
 			expect( isSubsequence( Y, result ) ).toBe( true );
 
-			// Length should be less than or equal to 6 (optimal)
-			expect( result.length ).toBeLessThanOrEqual( 6 );
+			// Verify optimal length
+			expect( result.length ).toBe( 5 );
 		} );
 	} );
 
-	// CUSTOM EQUALITY FUNCTION TESTS
 	describe( 'Custom equality function', () => {
 		it( 'should use custom equality function for comparing elements', () => {
 			const X = [
@@ -284,6 +292,10 @@ describe( 'shortestCommonSupersequence', () => {
 			// Should use references from X
 			expect( result[ 0 ] ).toBe( X[ 0 ] );
 			expect( result[ 1 ] ).toBe( X[ 1 ] );
+
+			// Test that it's a valid supersequence of both arrays
+			expect( isSubsequence( X, result, isEqual ) ).toBe( true );
+			expect( isSubsequence( Y, result, isEqual ) ).toBe( true );
 		} );
 
 		it( 'should handle case-insensitive comparison', () => {
@@ -303,12 +315,15 @@ describe( 'shortestCommonSupersequence', () => {
 			expect( result.includes( 'C' ) ).toBe( true );
 			expect( result.includes( 'D' ) ).toBe( true );
 
+			// Test that it's a valid supersequence of both arrays
+			expect( isSubsequence( X, result, isEqual ) ).toBe( true );
+			expect( isSubsequence( Y, result, isEqual ) ).toBe( true );
+
 			// Check length is correct (4 instead of 6)
 			expect( result.length ).toBe( 4 );
 		} );
 	} );
 
-	// NULL/UNDEFINED HANDLING
 	describe( 'Null and undefined handling', () => {
 		it( 'should handle arrays with null values', () => {
 			const X = [ 1, null, 3 ];
@@ -324,19 +339,15 @@ describe( 'shortestCommonSupersequence', () => {
 			const Y = [ 2, undefined, 4 ];
 			const result = shortestCommonSupersequence( X, Y );
 
-			// Should handle undefined values correctly
-			expect( result ).toContain( 1 );
-			expect( result ).toContain( undefined );
-			expect( result ).toContain( 2 );
-			expect( result ).toContain( 3 );
-			expect( result ).toContain( 4 );
+			// Test that it's a valid supersequence of both arrays
+			expect( isSubsequence( X, result ) ).toBe( true );
+			expect( isSubsequence( Y, result ) ).toBe( true );
 
 			// Length should be shorter than concatenating the arrays
 			expect( result.length ).toBeLessThan( X.length + Y.length );
 		} );
 	} );
 
-	// MUTATION TESTS
 	describe( 'Mutation checks', () => {
 		it( 'should not modify the input arrays', () => {
 			const X = [ 1, 2, 3 ];
@@ -354,18 +365,3 @@ describe( 'shortestCommonSupersequence', () => {
 		} );
 	} );
 } );
-
-// Helper functions for testing
-function isSubsequence( arr, superseq ) {
-	let i = 0;
-	let j = 0;
-
-	while ( i < arr.length && j < superseq.length ) {
-		if ( arr[ i ] === superseq[ j ] ) {
-			i++;
-		}
-		j++;
-	}
-
-	return i === arr.length;
-}
