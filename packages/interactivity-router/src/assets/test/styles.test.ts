@@ -3,9 +3,9 @@
  */
 import {
 	updateStylesWithSCS,
-	StyleElement,
 	prepareStyles,
 	applyStyles,
+	type StyleElement,
 } from '../styles';
 
 // Mock DOM elements for testing
@@ -27,65 +27,33 @@ const createLinkElement = (
 	return element;
 };
 
-// Mock for Sheet property since it's not available in jsdom
-Object.defineProperty( HTMLLinkElement.prototype, 'sheet', {
-	get() {
-		if ( ! this._sheet ) {
-			this._sheet = {
-				disabled: false,
-				media: { mediaText: 'all' },
-			};
-		}
-		return this._sheet;
-	},
-} );
-
-Object.defineProperty( HTMLStyleElement.prototype, 'sheet', {
-	get() {
-		if ( ! this._sheet ) {
-			this._sheet = {
-				disabled: false,
-				media: { mediaText: 'all' },
-			};
-		}
-		return this._sheet;
-	},
-} );
-
 describe( 'updateStylesWithSCS', () => {
-	let parent: HTMLElement;
+	const parent = document.createElement( 'head' );
 
 	beforeEach( () => {
 		// Clean up the DOM and create a fresh parent element for each test
-		document.body.innerHTML = '';
-		parent = document.createElement( 'div' );
-		document.body.appendChild( parent );
+		parent.replaceChildren();
 
 		// Try to clear any cached promises (though this is internal to the implementation)
 		jest.restoreAllMocks();
 	} );
 
 	it( 'should append all elements when X is empty in the correct order', () => {
+		const X = [];
 		const Y = [
 			createStyleElement( 'style1' ),
 			createLinkElement( 'link1' ),
 			createStyleElement( 'style2' ),
 		];
-
-		const promises = updateStylesWithSCS( [], Y, parent );
+		const promises = updateStylesWithSCS( X, Y, parent );
 
 		expect( promises.length ).toBe( 3 );
 		expect( parent.childNodes.length ).toBe( 3 );
 
-		// Verify elements are present
-		expect( parent.querySelector( '#style1' ) ).toBeTruthy();
-		expect( parent.querySelector( '#link1' ) ).toBeTruthy();
-		expect( parent.querySelector( '#style2' ) ).toBeTruthy();
-
 		// Verify elements are in the correct order
-		expect( parent.childNodes[ 0 ].id ).toBe( 'style1' );
-		expect( parent.childNodes[ 1 ].id ).toBe( 'link1' );
-		expect( parent.childNodes[ 2 ].id ).toBe( 'style2' );
+		expect( parent.childNodes[ 0 ] ).toBe( Y[ 0 ] );
+		expect( parent.childNodes[ 1 ] ).toBe( Y[ 1 ] );
+		expect( parent.childNodes[ 2 ] ).toBe( Y[ 2 ] );
 	} );
 
 	it( 'should handle when both X and Y are empty', () => {
@@ -95,172 +63,161 @@ describe( 'updateStylesWithSCS', () => {
 		expect( parent.childNodes.length ).toBe( 0 );
 	} );
 
-	it( 'should keep existing elements when they match in both X and Y', () => {
+	it( 'should do nothing when X is non-empty but Y is empty', () => {
 		const style1 = createStyleElement( 'style1' );
-		const link1 = createLinkElement( 'link1' );
+		const style2 = createStyleElement( 'style2' );
+		const X = [ style1, style2 ];
+		// Pre-append X so they are in the DOM.
+		parent.append( ...X );
 
-		// Add elements to parent to simulate existing DOM
-		parent.appendChild( style1 );
-		parent.appendChild( link1 );
+		const promises = updateStylesWithSCS( X, [], parent );
 
-		const X = [ style1, link1 ];
+		// No new promises should be generated.
+		expect( promises.length ).toBe( 0 );
+		// The DOM should still only have the original X elements.
+		expect( parent.childNodes.length ).toBe( X.length );
+		expect( parent.childNodes[ 0 ] ).toBe( style1 );
+		expect( parent.childNodes[ 1 ] ).toBe( style2 );
+	} );
+
+	it( 'should keep existing elements when they match in both X and Y', () => {
+		const X = [
+			createStyleElement( 'style1' ),
+			createLinkElement( 'link1' ),
+		];
 		const Y = [
-			style1.cloneNode( true ),
-			link1.cloneNode( true ),
-		] as StyleElement[];
+			createStyleElement( 'style1' ),
+			createLinkElement( 'link1' ),
+		];
+
+		parent.append( ...X );
 
 		const promises = updateStylesWithSCS( X, Y, parent );
 
 		expect( promises.length ).toBe( 2 );
 		expect( parent.childNodes.length ).toBe( 2 );
 		// Should maintain the original elements (not replace with clones)
-		expect( parent.childNodes[ 0 ] ).toBe( style1 );
-		expect( parent.childNodes[ 1 ] ).toBe( link1 );
+		expect( parent.childNodes[ 0 ] ).toBe( X[ 0 ] );
+		expect( parent.childNodes[ 1 ] ).toBe( X[ 1 ] );
 	} );
 
 	it( 'should insert new elements from Y in correct positions relative to X', () => {
-		const style1 = createStyleElement( 'style1' );
-		const style3 = createStyleElement( 'style3' );
-
-		// Add existing elements to parent
-		parent.appendChild( style1 );
-		parent.appendChild( style3 );
-
-		const X = [ style1, style3 ];
-		const style2 = createStyleElement( 'style2' );
-		const style4 = createStyleElement( 'style4' );
+		const X = [
+			createStyleElement( 'style1' ),
+			createStyleElement( 'style3' ),
+		];
 		const Y = [
-			style1.cloneNode( true ),
-			style2,
-			style3.cloneNode( true ),
-			style4,
-		] as StyleElement[];
+			createStyleElement( 'style1' ),
+			createStyleElement( 'style2' ),
+			createStyleElement( 'style3' ),
+			createStyleElement( 'style4' ),
+		];
+
+		parent.append( ...X );
 
 		const promises = updateStylesWithSCS( X, Y, parent );
 
 		expect( promises.length ).toBe( 4 );
 		expect( parent.childNodes.length ).toBe( 4 );
-		expect( parent.childNodes[ 0 ].id ).toBe( 'style1' );
-		expect( parent.childNodes[ 1 ].id ).toBe( 'style2' );
-		expect( parent.childNodes[ 2 ].id ).toBe( 'style3' );
-		expect( parent.childNodes[ 3 ].id ).toBe( 'style4' );
+		expect( parent.childNodes[ 0 ] ).toBe( X[ 0 ] );
+		expect( parent.childNodes[ 1 ] ).toBe( Y[ 1 ] );
+		expect( parent.childNodes[ 2 ] ).toBe( X[ 1 ] );
+		expect( parent.childNodes[ 3 ] ).toBe( Y[ 3 ] );
 	} );
 
-	it( 'should handle Y having completely different elements than X in a deterministic order', () => {
-		const style1 = createStyleElement( 'style1' );
-		const style2 = createStyleElement( 'style2' );
+	it( 'should handle Y having completely different elements than X', () => {
+		const X = [
+			createStyleElement( 'style1' ),
+			createStyleElement( 'style2' ),
+		];
+		const Y = [
+			createStyleElement( 'style3' ),
+			createStyleElement( 'style4' ),
+		];
 
-		// Add existing elements to parent
-		parent.appendChild( style1 );
-		parent.appendChild( style2 );
-
-		const X = [ style1, style2 ];
-		const style3 = createStyleElement( 'style3' );
-		const style4 = createStyleElement( 'style4' );
-		const Y = [ style3, style4 ];
+		parent.append( ...X );
 
 		const promises = updateStylesWithSCS( X, Y, parent );
 
 		expect( promises.length ).toBe( 2 );
 
-		// Verify all elements exist after the update
-		const ids = Array.from( parent.childNodes ).map(
-			( node ) => ( node as HTMLElement ).id
-		);
-		expect( ids ).toContain( 'style1' );
-		expect( ids ).toContain( 'style2' );
-		expect( ids ).toContain( 'style3' );
-		expect( ids ).toContain( 'style4' );
-
 		// Check the specific order - based on the SCS algorithm
-		// When X and Y are completely different, the SCS places all elements from Y before X
-		expect( parent.childNodes[ 0 ].id ).toBe( 'style3' );
-		expect( parent.childNodes[ 1 ].id ).toBe( 'style4' );
-		expect( parent.childNodes[ 2 ].id ).toBe( 'style1' );
-		expect( parent.childNodes[ 3 ].id ).toBe( 'style2' );
+		// When X and Y are completely different, the SCS places
+		// all elements from Y before X.
+		expect( parent.childNodes[ 0 ] ).toBe( Y[ 0 ] );
+		expect( parent.childNodes[ 1 ] ).toBe( Y[ 1 ] );
+		expect( parent.childNodes[ 2 ] ).toBe( X[ 0 ] );
+		expect( parent.childNodes[ 3 ] ).toBe( X[ 1 ] );
 	} );
 
 	it( 'should consider normalized media attributes when comparing elements', () => {
-		// Create a link that simulates one that has been processed for preloading
-		const link1 = createLinkElement( 'same-link' );
-		link1.setAttribute( 'media', 'preload' );
-		link1.dataset.originalMedia = 'screen';
-		parent.appendChild( link1 );
-
-		// Create an identical link with regular media attribute
-		const link2 = createLinkElement( 'same-link' );
-		link2.setAttribute( 'media', 'screen' );
-
 		// These should be considered equal after normalizing the media attribute
-		const X = [ link1 ];
-		const Y = [ link2 ];
+		const X = [ createLinkElement( 'same-link' ) ];
+		const Y = [ createLinkElement( 'same-link' ) ];
+
+		X[ 0 ].setAttribute( 'media', 'preload' );
+		X[ 0 ].dataset.originalMedia = 'screen';
+
+		Y[ 0 ].setAttribute( 'media', 'screen' );
+
+		parent.append( ...X );
 
 		const promises = updateStylesWithSCS( X, Y, parent );
 
-		// Should only have one link in the parent (no duplicates)
 		expect( parent.childNodes.length ).toBe( 1 );
-
-		// Should have only returned one promise, since the elements are considered equal
 		expect( promises.length ).toBe( 1 );
-
-		// The original element should still be in the DOM
-		expect( parent.contains( link1 ) ).toBe( true );
+		expect( parent.childNodes[ 0 ] ).toBe( X[ 0 ] );
 	} );
 
 	it( 'should treat style elements as already loaded', async () => {
-		const style1 = createStyleElement( 'style1' );
-		const promises = updateStylesWithSCS( [], [ style1 ], parent );
+		const X = [ createStyleElement( 'style1' ) ];
+		const Y = [ createStyleElement( 'style1' ) ];
+
+		parent.append( ...X );
+
+		const promises = updateStylesWithSCS( X, Y, parent );
 
 		expect( promises.length ).toBe( 1 );
-
-		// Style elements should resolve immediately
-		const result = await promises[ 0 ];
-		expect( result ).toBe( style1 );
+		expect( await promises[ 0 ] ).toBe( X[ 0 ] );
 	} );
 
-	it( 'should return the same promise for the same element', () => {
-		const link1 = createLinkElement( 'link1' );
+	it( 'should return the same promise for equivalent link elements', () => {
+		const X = [ createLinkElement( 'link1' ) ];
+		const Y = [ createLinkElement( 'link1' ) ];
 
 		// First, add it to the DOM
-		const promises1 = updateStylesWithSCS( [], [ link1 ], parent );
+		const promises1 = updateStylesWithSCS( [], X, parent );
 
 		// Then, use it in a second call
-		const X = [];
-		const Y = [ link1 ];
 		const promises2 = updateStylesWithSCS( X, Y, parent );
 
 		// The promises should be the same
 		expect( promises1[ 0 ] ).toBe( promises2[ 0 ] );
 	} );
 
-	it( 'should return the same promise for the same style element', () => {
-		const style1 = createStyleElement( 'style1' );
+	it( 'should return the same promise for equivalent style elements', () => {
+		const X = [ createStyleElement( 'style1' ) ];
+		const Y = [ createStyleElement( 'style1' ) ];
 
 		// First, add it to the DOM
-		const promises1 = updateStylesWithSCS( [], [ style1 ], parent );
+		const promises1 = updateStylesWithSCS( [], X, parent );
 
 		// Then, use it in a second call
-		const X = [];
-		const Y = [ style1 ];
 		const promises2 = updateStylesWithSCS( X, Y, parent );
 
 		// The promises should be the same
 		expect( promises1[ 0 ] ).toBe( promises2[ 0 ] );
 	} );
 
-	it( 'should handle complex reordering of elements maintaining the correct order', () => {
+	it( 'should handle complex reordering of elements maintaining the correct order', async () => {
 		// Initial set of elements
 		const style1 = createStyleElement( 'style1' );
 		const style2 = createStyleElement( 'style2' );
 		const style3 = createStyleElement( 'style3' );
 		const style4 = createStyleElement( 'style4' );
 
-		parent.appendChild( style1 );
-		parent.appendChild( style2 );
-		parent.appendChild( style3 );
-		parent.appendChild( style4 );
-
 		const X = [ style1, style2, style3, style4 ];
+		parent.append( ...X );
 
 		// New set with reordering and some new elements
 		const newStyle1 = createStyleElement( 'style1' );
@@ -275,28 +232,22 @@ describe( 'updateStylesWithSCS', () => {
 
 		expect( promises.length ).toBe( 5 );
 
-		// Check the exact order of elements after applying the SCS algorithm
-		const ids = Array.from( parent.childNodes ).map(
-			( node ) => ( node as HTMLElement ).id
-		);
-
-		// The actual order from observation:
-		// 1. style1 (matched in both X and Y)
-		// 2. style3 (matched in both X and Y)
-		// 3. style5 (only in Y, inserted after style3)
-		// 4. style2 (matched in both X and Y)
-		// 5. style6 (only in Y, inserted after style2)
-		// 6. style3 (appears again - the original element)
-		// 7. style4 (kept from X since it wasn't in Y)
-
 		// Verify the exact order
-		expect( ids[ 0 ] ).toBe( 'style1' );
-		expect( ids[ 1 ] ).toBe( 'style3' );
-		expect( ids[ 2 ] ).toBe( 'style5' );
-		expect( ids[ 3 ] ).toBe( 'style2' );
-		expect( ids[ 4 ] ).toBe( 'style6' );
-		expect( ids[ 5 ] ).toBe( 'style3' ); // Duplicate style3
-		expect( ids[ 6 ] ).toBe( 'style4' );
+		expect( parent.childNodes[ 0 ] ).toBe( style1 );
+		expect( parent.childNodes[ 1 ] ).toBe( newStyle3 );
+		expect( parent.childNodes[ 2 ] ).toBe( newStyle5 );
+		expect( parent.childNodes[ 3 ] ).toBe( style2 );
+		expect( parent.childNodes[ 4 ] ).toBe( newStyle6 );
+		expect( parent.childNodes[ 5 ] ).toBe( style3 );
+		expect( parent.childNodes[ 6 ] ).toBe( style4 );
+
+		// Verify the promise values
+		const values = await Promise.all( promises );
+		expect( values[ 0 ] ).toBe( style1 );
+		expect( values[ 1 ] ).toBe( newStyle3 );
+		expect( values[ 2 ] ).toBe( newStyle5 );
+		expect( values[ 3 ] ).toBe( style2 );
+		expect( values[ 4 ] ).toBe( newStyle6 );
 	} );
 
 	it( 'should handle link elements with load events', async () => {
@@ -311,120 +262,80 @@ describe( 'updateStylesWithSCS', () => {
 		expect( result ).toBe( link1 );
 	} );
 
-	it( 'should handle mixed style and link elements by adding them all to the DOM', () => {
-		// Create a mix of style and link elements
-		const style1 = createStyleElement( 'style1' );
-		const link1 = createLinkElement( 'link1' );
+	it( 'should reject the promise when a link element fails to load', async () => {
+		const link1 = createLinkElement( 'link-fail' );
+		// Remove load/error listeners by not adding it to the DOM initially.
+		const promises = updateStylesWithSCS( [], [ link1 ], parent );
 
-		// Add elements to parent
-		parent.appendChild( style1 );
+		// Simulate an error event.
+		const errorEvent = new Event( 'error' );
+		link1.dispatchEvent( errorEvent );
 
-		const X = [ style1 ];
-		const Y = [ style1.cloneNode( true ), link1 ] as StyleElement[];
-
-		const promises = updateStylesWithSCS( X, Y, parent );
-
-		expect( promises.length ).toBe( 2 );
-
-		// Check both elements are in the DOM
-		expect( parent.contains( style1 ) ).toBe( true );
-		expect( parent.contains( link1 ) ).toBe( true );
+		await expect( promises[ 0 ] ).rejects.toThrow(
+			`The style sheet with the following URL failed to load. ${ link1.href }`
+		);
 	} );
 
-	it( 'should handle additions to element sets with correct ordering', () => {
-		// Initial set
-		const style1 = createStyleElement( 'style1' );
-		const style2 = createStyleElement( 'style2' );
-
-		parent.appendChild( style1 );
-		parent.appendChild( style2 );
-
-		const X = [ style1, style2 ];
-
-		// New set adds an element at the end
-		const style3 = createStyleElement( 'style3' );
+	it( 'should handle mixed style and link elements', async () => {
+		const X = [
+			createLinkElement( 'link1' ),
+			createStyleElement( 'style1' ),
+			createLinkElement( 'link2' ),
+			createStyleElement( 'style2' ),
+			createStyleElement( 'style3' ),
+		];
+		parent.append( ...X );
 
 		const Y = [
-			style1.cloneNode( true ) as HTMLStyleElement,
-			style2.cloneNode( true ) as HTMLStyleElement,
-			style3,
+			createLinkElement( 'link1' ),
+			createLinkElement( 'link3' ),
+			createStyleElement( 'style1' ),
+			createLinkElement( 'link2' ),
+			createStyleElement( 'style2' ),
+			createLinkElement( 'link1' ),
 		];
 
+		// Run the update using X and Y.
 		const promises = updateStylesWithSCS( X, Y, parent );
 
-		expect( promises.length ).toBe( 3 );
+		// Expected DOM outcome (based on the SCS algorithm):
+		// We expect that the existing link1 and link2 are reused, and the new link3 is inserted.
+		// The duplicate occurrences of link1 (via link1Clone and link1 itself in Y)
+		// should resolve to the original link1.
+		expect( parent.childNodes.length ).toBe( 7 );
+		expect( [ ...parent.childNodes ] ).toEqual( [
+			X[ 0 ],
+			Y[ 1 ],
+			X[ 1 ],
+			X[ 2 ],
+			X[ 3 ],
+			Y[ 5 ],
+			X[ 4 ],
+		] );
 
-		// Get the actual order of elements
-		const ids = Array.from( parent.childNodes ).map(
-			( node ) => ( node as HTMLElement ).id
+		( parent.childNodes as NodeListOf< StyleElement > ).forEach(
+			( element ) => element.dispatchEvent( new Event( 'load' ) )
 		);
 
-		// In this case, we should expect:
-		// 1. style1 (matched in both X and Y)
-		// 2. style2 (matched in both X and Y)
-		// 3. style3 (new element added after existing ones)
+		// Verify that the returned promises resolve to the appropriate elements.
+		const resolved = await Promise.all( promises );
 
-		// Verify the exact order
-		expect( ids[ 0 ] ).toBe( 'style1' );
-		expect( ids[ 1 ] ).toBe( 'style2' );
-		expect( ids[ 2 ] ).toBe( 'style3' );
-	} );
-
-	it( 'should efficiently handle additions at the beginning', () => {
-		// Initial set
-		const style3 = createStyleElement( 'style3' );
-		const style4 = createStyleElement( 'style4' );
-
-		parent.appendChild( style3 );
-		parent.appendChild( style4 );
-
-		const X = [ style3, style4 ];
-
-		// New set adds elements at the beginning
-		const style1 = createStyleElement( 'style1' );
-		const style2 = createStyleElement( 'style2' );
-
-		const Y = [
-			style1,
-			style2,
-			style3.cloneNode( true ) as HTMLStyleElement,
-			style4.cloneNode( true ) as HTMLStyleElement,
-		];
-
-		const promises = updateStylesWithSCS( X, Y, parent );
-
-		expect( promises.length ).toBe( 4 );
-
-		// All elements should be in the DOM
-		const ids = Array.from( parent.childNodes ).map(
-			( node ) => ( node as HTMLElement ).id
-		);
-		expect( ids ).toContain( 'style1' );
-		expect( ids ).toContain( 'style2' );
-		expect( ids ).toContain( 'style3' );
-		expect( ids ).toContain( 'style4' );
-
-		// Check the order
-		expect( ids.indexOf( 'style1' ) ).toBeLessThan(
-			ids.indexOf( 'style3' )
-		);
-		expect( ids.indexOf( 'style2' ) ).toBeLessThan(
-			ids.indexOf( 'style3' )
-		);
-		expect( ids.indexOf( 'style3' ) ).toBeLessThan(
-			ids.indexOf( 'style4' )
-		);
+		expect( promises.length ).toBe( 6 );
+		expect( resolved ).toEqual( [
+			X[ 0 ],
+			Y[ 1 ],
+			X[ 1 ],
+			X[ 2 ],
+			X[ 3 ],
+			Y[ 5 ],
+		] );
 	} );
 } );
 
 // Tests for prepareStyles function
 describe( 'prepareStyles', () => {
 	beforeEach( () => {
-		// Clean up the DOM
-		document.body.innerHTML = '';
-		// Clear the cache by setting it to a new Map
-		// @ts-ignore - accessing private property for testing
-		window.styleSheetCache = new Map();
+		document.head.replaceChildren();
 	} );
 
 	it( 'should use cached promises for the same URL', () => {
@@ -453,7 +364,6 @@ describe( 'prepareStyles', () => {
 		doc.head.appendChild( style1 );
 		doc.head.appendChild( style2 );
 
-		// Call prepareStyles
 		prepareStyles( doc );
 
 		// Check that styles were extracted and added to the document
@@ -464,9 +374,24 @@ describe( 'prepareStyles', () => {
 
 // Tests for applyStyles function
 describe( 'applyStyles', () => {
+	const mockSheet = (
+		element: StyleElement,
+		{ disabled, mediaText }: { disabled: boolean; mediaText: string }
+	) => {
+		if ( element.sheet ) {
+			Object.assign( element.sheet, { disabled, media: { mediaText } } );
+		} else {
+			Object.defineProperty( element, 'sheet', {
+				value: {
+					disabled,
+					media: { mediaText },
+				},
+			} );
+		}
+	};
+
 	beforeEach( () => {
-		// Clean up the DOM
-		document.body.innerHTML = '';
+		document.head.replaceChildren();
 	} );
 
 	it( 'should enable included styles and disable others', () => {
@@ -480,45 +405,64 @@ describe( 'applyStyles', () => {
 		document.head.appendChild( style2 );
 		document.head.appendChild( style3 );
 
+		// Init `sheet` property
+		mockSheet( style1, { disabled: true, mediaText: 'all' } );
+		mockSheet( style2, { disabled: false, mediaText: 'all' } );
+		mockSheet( style3, { disabled: false, mediaText: 'prefetch' } );
+
 		// Apply styles to only style1 and style3
 		applyStyles( [ style1, style3 ] );
 
 		// style1 and style3 should be enabled, style2 should be disabled
-		expect( style1.sheet.disabled ).toBe( false );
-		expect( style2.sheet.disabled ).toBe( true );
-		expect( style3.sheet.disabled ).toBe( false );
+		expect( style1.sheet!.disabled ).toBe( false );
+		expect( style2.sheet!.disabled ).toBe( true );
+		expect( style3.sheet!.disabled ).toBe( false );
 	} );
 
 	it( 'should set media appropriately based on originalMedia', () => {
 		// Create link elements with originalMedia
 		const link1 = createLinkElement( 'link1' );
+		link1.setAttribute( 'media', 'prefetch' );
 		link1.dataset.originalMedia = 'print';
 		const link2 = createLinkElement( 'link2' );
+		link2.setAttribute( 'media', 'prefetch' );
 		link2.dataset.originalMedia = 'screen';
 
 		// Add to document
 		document.head.appendChild( link1 );
 		document.head.appendChild( link2 );
 
+		// Init `sheet` property
+		mockSheet( link1, { disabled: false, mediaText: 'prefetch' } );
+		mockSheet( link2, { disabled: false, mediaText: 'prefetch' } );
+
 		// Apply styles
 		applyStyles( [ link1, link2 ] );
 
 		// Check that media was set correctly
-		expect( link1.sheet.media.mediaText ).toBe( 'print' );
-		expect( link2.sheet.media.mediaText ).toBe( 'screen' );
+		expect( link1.sheet!.media.mediaText ).toBe( 'print' );
+		expect( link2.sheet!.media.mediaText ).toBe( 'screen' );
 	} );
 
 	it( 'should use "all" as default media if no originalMedia specified', () => {
-		// Create link element without originalMedia
+		// Create elements without originalMedia
 		const link = createLinkElement( 'link' );
+		const style = createStyleElement( 'style' );
+		link.setAttribute( 'media', 'prefetch' );
+		style.setAttribute( 'media', 'prefetch' );
 
 		// Add to document
-		document.head.appendChild( link );
+		document.head.append( link, style );
+
+		// Init `sheet` property
+		mockSheet( link, { disabled: false, mediaText: 'preload' } );
+		mockSheet( style, { disabled: false, mediaText: 'preload' } );
 
 		// Apply styles
-		applyStyles( [ link ] );
+		applyStyles( [ link, style ] );
 
 		// Default should be "all"
-		expect( link.sheet.media.mediaText ).toBe( 'all' );
+		expect( link.sheet!.media.mediaText ).toBe( 'all' );
+		expect( style.sheet!.media.mediaText ).toBe( 'all' );
 	} );
 } );
