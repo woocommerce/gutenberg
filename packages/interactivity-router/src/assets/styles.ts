@@ -83,11 +83,11 @@ export function updateStylesWithSCS(
 			promises.push( prepareStylePromise( yElement ) );
 			if ( xIndex < xLength ) {
 				xElement.before( yElement );
-				yIndex++;
 			} else {
 				last.after( yElement );
 				last = yElement;
 			}
+			yIndex++;
 		}
 	}
 
