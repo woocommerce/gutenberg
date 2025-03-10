@@ -8,6 +8,22 @@ import {
 	type StyleElement,
 } from '../styles';
 
+const mockSheet = (
+	element: StyleElement,
+	{ disabled, mediaText }: { disabled: boolean; mediaText: string }
+) => {
+	if ( element.sheet ) {
+		Object.assign( element.sheet, { disabled, media: { mediaText } } );
+	} else {
+		Object.defineProperty( element, 'sheet', {
+			value: {
+				disabled,
+				media: { mediaText },
+			},
+		} );
+	}
+};
+
 // Mock DOM elements for testing
 const createStyleElement = ( id: string ): HTMLStyleElement => {
 	const element = document.createElement( 'style' );
@@ -28,14 +44,14 @@ const createLinkElement = (
 };
 
 describe( 'updateStylesWithSCS', () => {
-	const parent = document.createElement( 'head' );
+	const parent = document.head;
 
 	beforeEach( () => {
-		// Clean up the DOM and create a fresh parent element for each test
-		parent.replaceChildren();
+		document.head.replaceChildren();
+	} );
 
-		// Try to clear any cached promises (though this is internal to the implementation)
-		jest.restoreAllMocks();
+	afterAll( () => {
+		document.head.replaceChildren();
 	} );
 
 	it( 'should append all elements when X is empty in the correct order', () => {
@@ -330,11 +346,100 @@ describe( 'updateStylesWithSCS', () => {
 			Y[ 5 ],
 		] );
 	} );
+
+	it( 'should set media and data-original-media correctly on new elements', async () => {
+		const X = [
+			createStyleElement( 'style1' ),
+			createStyleElement( 'style1Media' ),
+			createLinkElement( 'link1' ),
+			createLinkElement( 'link1Media' ),
+		];
+
+		X[ 1 ].setAttribute( 'media', 'screen' ); // style1Media
+		X[ 3 ].setAttribute( 'media', 'screen' ); // link1Media
+
+		mockSheet( X[ 2 ], { disabled: false, mediaText: 'all' } ); // link1
+		mockSheet( X[ 3 ], { disabled: false, mediaText: 'screen' } ); // link1Media
+
+		parent.append( ...X );
+
+		const Y = [
+			...X.map( ( e ) => e.cloneNode( true ) as StyleElement ),
+			createStyleElement( 'style2' ),
+			createStyleElement( 'style2Media' ),
+			createLinkElement( 'link2' ),
+			createLinkElement( 'link2Media' ),
+		];
+
+		Y[ 5 ].setAttribute( 'media', 'screen' ); // style2Media
+		Y[ 7 ].setAttribute( 'media', 'screen' ); // link2Media
+
+		const promises = updateStylesWithSCS( X, Y, parent );
+
+		( parent.childNodes as NodeListOf< StyleElement > ).forEach(
+			( element ) => element.dispatchEvent( new Event( 'load' ) )
+		);
+
+		const elements = await Promise.all( promises );
+
+		const attributes = elements.map( ( e ) => ( {
+			id: e.id,
+			media: e.getAttribute( 'media' ),
+			originalMedia: e.getAttribute( 'data-original-media' ),
+		} ) );
+
+		expect( attributes ).toEqual( [
+			{
+				id: 'style1',
+				media: null,
+				originalMedia: null,
+			},
+			{
+				id: 'style1Media',
+				media: 'screen',
+				originalMedia: null,
+			},
+			{
+				id: 'link1',
+				media: null,
+				originalMedia: null,
+			},
+			{
+				id: 'link1Media',
+				media: 'screen',
+				originalMedia: null,
+			},
+			{
+				id: 'style2',
+				media: 'preload',
+				originalMedia: null,
+			},
+			{
+				id: 'style2Media',
+				media: 'preload',
+				originalMedia: 'screen',
+			},
+			{
+				id: 'link2',
+				media: 'preload',
+				originalMedia: null,
+			},
+			{
+				id: 'link2Media',
+				media: 'preload',
+				originalMedia: 'screen',
+			},
+		] );
+	} );
 } );
 
 // Tests for prepareStyles function
 describe( 'prepareStyles', () => {
 	beforeEach( () => {
+		document.head.replaceChildren();
+	} );
+
+	afterAll( () => {
 		document.head.replaceChildren();
 	} );
 
@@ -374,23 +479,11 @@ describe( 'prepareStyles', () => {
 
 // Tests for applyStyles function
 describe( 'applyStyles', () => {
-	const mockSheet = (
-		element: StyleElement,
-		{ disabled, mediaText }: { disabled: boolean; mediaText: string }
-	) => {
-		if ( element.sheet ) {
-			Object.assign( element.sheet, { disabled, media: { mediaText } } );
-		} else {
-			Object.defineProperty( element, 'sheet', {
-				value: {
-					disabled,
-					media: { mediaText },
-				},
-			} );
-		}
-	};
-
 	beforeEach( () => {
+		document.head.replaceChildren();
+	} );
+
+	afterAll( () => {
 		document.head.replaceChildren();
 	} );
 
