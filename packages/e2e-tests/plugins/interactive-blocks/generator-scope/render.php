@@ -13,4 +13,5 @@
 	<input readonly data-wp-bind--value="context.result" data-testid="result" />
 	<button type="button" data-wp-on--click="callbacks.resolve" data-testid="resolve">Async resolve</button>
 	<button type="button" data-wp-on--click="callbacks.reject" data-testid="reject">Async reject</button>
+	<button type="button" data-wp-on--click="callbacks.capture" data-testid="capture">Async capture</button>
 </div>

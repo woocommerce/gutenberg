@@ -19,5 +19,14 @@ store( 'test/generator-scope', {
 				getContext().result = err.toString();
 			}
 		},
+		*capture() {
+			let value = yield Promise.resolve( 1 );
+			try {
+				value = yield Promise.reject( 2 );
+			} catch ( e ) {
+				value = yield Promise.resolve( 3 );
+			}
+			getContext().result = value;
+		},
 	},
 } );
