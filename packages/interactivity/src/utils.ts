@@ -150,6 +150,8 @@ export function withScope( func: ( ...args: unknown[] ) => unknown ) {
 				try {
 					it = error ? gen.throw( error ) : gen.next( value );
 					error = undefined;
+				} catch ( e ) {
+					throw e;
 				} finally {
 					resetScope();
 					resetNamespace();

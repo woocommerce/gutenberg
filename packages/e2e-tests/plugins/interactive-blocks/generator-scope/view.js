@@ -3,7 +3,7 @@
  */
 import { store, getContext } from '@wordpress/interactivity';
 
-store( 'test/generator-scope', {
+const { callbacks } = store( 'test/generator-scope', {
 	callbacks: {
 		*resolve() {
 			try {
@@ -27,6 +27,17 @@ store( 'test/generator-scope', {
 				value = yield Promise.resolve( 3 );
 			}
 			getContext().result = value;
+		},
+		*throw() {
+			const value = yield Promise.resolve( '🤯' );
+			throw new Error( value );
+		},
+		*captureThrow() {
+			try {
+				yield callbacks.throw();
+			} catch ( err ) {
+				getContext().result = err.toString();
+			}
 		},
 	},
 } );

@@ -38,4 +38,14 @@ test.describe( 'async actions', () => {
 		await page.getByTestId( 'capture' ).click();
 		await expect( resultInput ).toHaveValue( '3' );
 	} );
+
+	test( 'Promise generator callbacks should be able to throw errors', async ( {
+		page,
+	} ) => {
+		const resultInput = page.getByTestId( 'result' );
+		await expect( resultInput ).toHaveValue( '' );
+
+		await page.getByTestId( 'captureThrow' ).click();
+		await expect( resultInput ).toHaveValue( 'Error: 🤯' );
+	} );
 } );
