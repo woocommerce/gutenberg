@@ -39,5 +39,15 @@ const { callbacks } = store( 'test/generator-scope', {
 				getContext().result = err.toString();
 			}
 		},
+		*returnReject() {
+			return Promise.reject( new Error( '🔚' ) );
+		},
+		*captureReturnReject() {
+			try {
+				yield callbacks.returnReject();
+			} catch ( err ) {
+				getContext().result = err.toString();
+			}
+		},
 	},
 } );

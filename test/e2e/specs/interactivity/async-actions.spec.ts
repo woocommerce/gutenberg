@@ -48,4 +48,14 @@ test.describe( 'async actions', () => {
 		await page.getByTestId( 'captureThrow' ).click();
 		await expect( resultInput ).toHaveValue( 'Error: 🤯' );
 	} );
+
+	test( 'Promise generator callbacks should throw when rejected promises are returned', async ( {
+		page,
+	} ) => {
+		const resultInput = page.getByTestId( 'result' );
+		await expect( resultInput ).toHaveValue( '' );
+
+		await page.getByTestId( 'captureReturnReject' ).click();
+		await expect( resultInput ).toHaveValue( 'Error: 🔚' );
+	} );
 } );
