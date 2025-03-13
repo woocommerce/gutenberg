@@ -77,23 +77,7 @@ describe( 'Interactivity API', () => {
 			expect( typeof wrapped ).toBe( 'function' );
 		} );
 
-		it( 'should call the original normal function', () => {
-			let called = false;
-			function normalFn( x: number ) {
-				called = true;
-				return x * 2;
-			}
-			const wrapped = dummyScopeAndNS( () => withScope( normalFn ) );
-			const result = wrapped( 5 );
-
-			expect( result ).toBe( 10 );
-			expect( called ).toBe( true );
-			// After invocation, scope and namespace are reset.
-			expect( getScope() ).toBe( previousScope );
-			expect( getNamespace() ).toBe( previousNamespace );
-		} );
-
-		it( 'should set the scope and namespace and restore them afterwards', () => {
+		it( 'should call the original function, set the scope and namespace and restore them afterwards', () => {
 			let called = false;
 			let scope: Scope;
 			let namespace: string;
@@ -133,7 +117,7 @@ describe( 'Interactivity API', () => {
 			expect( getNamespace() ).toBe( previousNamespace );
 		} );
 
-		it( 'should execute a generator function step by step maintaining scope and namespace', async () => {
+		it( 'should execute a generator function step by step and yield the correct values, maintaining scope and namespace', async () => {
 			const steps: Array< { scope: any; namespace: string } > = [];
 			function* gen() {
 				steps.push( { scope: getScope(), namespace: getNamespace() } );
@@ -151,19 +135,6 @@ describe( 'Interactivity API', () => {
 				expect( step.scope ).toBe( dummyScope );
 				expect( step.namespace ).toBe( dummyNamespace );
 			} );
-			expect( getScope() ).toBe( previousScope );
-			expect( getNamespace() ).toBe( previousNamespace );
-		} );
-
-		it( 'should yield correct values when promises resolve in generator functions', async () => {
-			function* gen() {
-				const a = yield Promise.resolve( 3 );
-				const b = yield Promise.resolve( a + 2 );
-				return b;
-			}
-			const wrapped = dummyScopeAndNS( () => withScope( gen ) );
-			const result = await wrapped();
-			expect( result ).toBe( 5 );
 			expect( getScope() ).toBe( previousScope );
 			expect( getNamespace() ).toBe( previousNamespace );
 		} );
@@ -215,25 +186,7 @@ describe( 'Interactivity API', () => {
 			expect( getNamespace() ).toBe( previousNamespace );
 		} );
 
-		it( 'should handle captured errors within generator execution and resume correctly', async () => {
-			function* gen() {
-				let a: number;
-				try {
-					a = yield Promise.reject( new Error( 'CatchMe' ) );
-				} catch ( e ) {
-					a = 10;
-				}
-				const b = yield Promise.resolve( a + 5 );
-				return b;
-			}
-			const wrapped = dummyScopeAndNS( () => withScope( gen ) );
-			const result = await wrapped();
-			expect( result ).toBe( 15 );
-			expect( getScope() ).toBe( previousScope );
-			expect( getNamespace() ).toBe( previousNamespace );
-		} );
-
-		it( 'should maintaining scope and namespace when a generator captures an error', async () => {
+		it( 'hould handle captured errors within generator execution and resume correctly, maintaining scope and namespace', async () => {
 			const steps: Array< { scope: any; namespace: string } > = [];
 			function* gen() {
 				let a: number;
