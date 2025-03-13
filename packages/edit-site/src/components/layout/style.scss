@@ -56,6 +56,8 @@
 	position: relative;
 	width: 100%;
 	z-index: z-index(".edit-site-layout__canvas-container");
+	display: flex;
+	flex-direction: column;
 
 	/*
 	 * The SiteHubMobile component is displayed
@@ -67,6 +69,10 @@
 	 */
 	.edit-site-sidebar__screen-wrapper {
 		padding: 0;
+	}
+
+	.edit-site-sidebar-navigation-screen__main {
+		padding: 0 $grid-unit-15;
 	}
 }
 
@@ -260,10 +266,6 @@ html.canvas-mode-edit-transition::view-transition-group(toggle) {
 		border-radius: 8px;
 		margin: $canvas-padding $canvas-padding $canvas-padding 0;
 	}
-}
-
-.edit-site-layout__area__404 {
-	margin: $canvas-padding;
 }
 
 .edit-site .components-editor-notices__snackbar {
