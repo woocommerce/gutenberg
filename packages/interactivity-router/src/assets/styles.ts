@@ -113,11 +113,31 @@ export function updateStylesWithSCS(
 	return promises;
 }
 
+/**
+ * Cache of promises per style elements.
+ *
+ * Each style element has their own associated `Promise` that resolves
+ * once the element has been loaded and is ready.
+ */
 const stylePromiseCache = new WeakMap<
 	StyleElement,
 	Promise< StyleElement >
 >();
 
+/**
+ * Prepare and return the corresponding `Promise` for the passed style
+ * element.
+ *
+ * It returns the cached promise if it exists. Otherwise, constructs
+ * a `Promise` that resolves once the element has finished loading.
+ *
+ * For those elements that are not in the DOM yet, this function
+ * injects a `media="preload"` attribute to the passed element so the
+ * style is loaded without applying any styles to the document.
+ *
+ * @param element Style element.
+ * @return The associated `Promise` to the passed element.
+ */
 const prepareStylePromise = (
 	element: StyleElement
 ): Promise< StyleElement > => {
@@ -159,8 +179,32 @@ const prepareStylePromise = (
 	return promise;
 };
 
+/**
+ * Cache of style promise lists per URL.
+ *
+ * It contains the list of style elements associated to the page with the
+ * passed URL. The original order is preserved to respect the CSS cascade.
+ *
+ * Each included promise resolves when the associated style element is ready.
+ */
 const styleSheetCache = new Map< string, Promise< StyleElement >[] >();
 
+/**
+ * Prepare all style elements contained in the passed document.
+ *
+ * This function calls {@link updateStylesWithSCS|`updateStylesWithSCS`}
+ * to insert only the minimum amount of style elements into the DOM, so
+ * those present in the passed document end up in the DOM while the order
+ * is respected.
+ *
+ * New appended style elements contain a `media=prefetch` attribute to
+ * make them effectively disabled until they are applied with the
+ * {@link applyStyles|`applyStyles`} function.
+ *
+ * @param doc Document instance.
+ * @param url URL for the passed document.
+ * @return A list of promises for each style element in the passed document.
+ */
 export const prepareStyles = (
 	doc: Document,
 	url: string = ( doc.location || window.location ).href
@@ -186,6 +230,15 @@ export const prepareStyles = (
 	return styleSheetCache.get( url );
 };
 
+/**
+ * Traverse all style elements in the DOM, enabling only those included
+ * in the passed list and disabling the others.
+ *
+ * If the style element has the `data-original-media` attribute, the
+ * original `media` value is restored.
+ *
+ * @param styles List of style elements to apply
+ */
 export const applyStyles = ( styles: StyleElement[] ) => {
 	window.document
 		.querySelectorAll( 'style,link[rel=stylesheet]' )
