@@ -9,9 +9,9 @@ export type StyleElement = HTMLLinkElement | HTMLStyleElement;
  * Compare the passed style or link elements to check if they can be
  * considered equal.
  *
- * To make the comparison, both style elements are normalized, removing
- * the `data-original-media` attribute and restoring the original `media`
- * attribute if necessary.
+ * To make the comparison, both style elements are normalized, reverting
+ * the changes made by {@link prepareStylePromise|`prepareStylePromise`}
+ * to the `data-original-media` and `media` attributes if necessary.
  *
  * @example
  * The following elements would be considered equal:
