@@ -5,7 +5,26 @@ import { shortestCommonSupersequence } from './scs';
 
 export type StyleElement = HTMLLinkElement | HTMLStyleElement;
 
-const isStyleEqual = ( a: StyleElement, b: StyleElement ): boolean => {
+/**
+ * Compare the passed style or link elements to check if they can be
+ * considered equal.
+ *
+ * To make the comparison, both style elements are normalized, removing
+ * the `data-original-media` attribute and restoring the original `media`
+ * attribute if necessary.
+ *
+ * @example
+ * The following elements would be considered equal:
+ * ```html
+ * <link rel="stylesheet" src="./assets/styles.css" media="all">
+ * <link rel="stylesheet" src="./assets/styles.css" media="preload" data-original-media="all">
+ * ```
+ *
+ * @param a `<style>` or `<link>` element.
+ * @param b `<style>` or `<link>` element.
+ * @return Whether they are considered equal.
+ */
+const areStylesEqual = ( a: StyleElement, b: StyleElement ): boolean => {
 	if ( a === b ) {
 		return true;
 	}
@@ -62,7 +81,7 @@ export function updateStylesWithSCS(
 		} );
 	}
 
-	const scs = shortestCommonSupersequence( X, Y, isStyleEqual );
+	const scs = shortestCommonSupersequence( X, Y, areStylesEqual );
 	const xLength = X.length;
 	const yLength = Y.length;
 	const promises = [];
@@ -73,8 +92,8 @@ export function updateStylesWithSCS(
 	for ( const scsElement of scs ) {
 		const xElement = X[ xIndex ];
 		const yElement = Y[ yIndex ];
-		if ( xIndex < xLength && isStyleEqual( xElement, scsElement ) ) {
-			if ( yIndex < yLength && isStyleEqual( yElement, scsElement ) ) {
+		if ( xIndex < xLength && areStylesEqual( xElement, scsElement ) ) {
+			if ( yIndex < yLength && areStylesEqual( yElement, scsElement ) ) {
 				promises.push( prepareStylePromise( xElement ) );
 				yIndex++;
 			}
