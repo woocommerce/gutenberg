@@ -258,4 +258,31 @@ test.describe( 'Router styles', () => {
 		await expect( csn ).toBeVisible();
 		await expect( orderChecker ).toHaveCSS( 'color', COLOR_GREEN );
 	} );
+
+	test( 'should refresh the page when stylesheet loading fails', async ( {
+		page,
+	} ) => {
+		const csn = page.getByTestId( 'client-side navigation' );
+		const red = page.getByTestId( 'red-from-link' );
+		const redBlock = page.getByTestId( 'red-block' );
+
+		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( redBlock ).toBeHidden();
+
+		// Setup a route handler to make requests to the red stylesheet fail.
+		// The route handler is removed after navigation to simulate a
+		// temporary error.
+		const linkPattern = '**/router-styles-red/style-from-link.css*';
+		await page.route( linkPattern, async ( route ) => {
+			await page.unroute( linkPattern );
+			return route.abort( 'failed' );
+		} );
+
+		// Navigate to the page with the Red block
+		await page.getByTestId( 'link red' ).click();
+
+		await expect( csn ).toBeHidden();
+		await expect( red ).toHaveCSS( 'color', COLOR_RED );
+		await expect( redBlock ).toBeVisible();
+	} );
 } );
