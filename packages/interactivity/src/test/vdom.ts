@@ -102,6 +102,21 @@ describe( 'toVdom', () => {
 			);
 		} );
 
+		it( 'should remove multiple comment nodes', () => {
+			const container = createElementFromHTML(
+				'<div><div>Test 1<!-- This is a comment --><!-- This is another comment --></div><div>Test 2</div></div>'
+			);
+			expect( toVdom( container ) ).toMatchVNode( [
+				h( 'div', null, [
+					h( 'div', null, [ 'Test 1' ] ),
+					h( 'div', null, [ 'Test 2' ] ),
+				] ),
+			] );
+			expect( container.outerHTML ).toBe(
+				'<div><div>Test 1</div><div>Test 2</div></div>'
+			);
+		} );
+
 		it( 'should remove comment nodes and continue to their parents', () => {
 			const container = createElementFromHTML(
 				'<div><div>Test 1<!-- This is a comment --></div><div>Test 2</div></div>'
@@ -142,6 +157,26 @@ describe( 'toVdom', () => {
 					[]
 				),
 			] );
+		} );
+
+		it( 'should remove comment nodes inside templates', () => {
+			const container = createElementFromHTML(
+				'<div><!-- This is a comment --><template><div>Test 1<!-- This is a comment --></div></template></div>'
+			);
+			expect( toVdom( container ) ).toMatchVNode( [
+				h( 'div', null, [
+					h(
+						'template' as any,
+						{
+							content: [ [ h( 'div', null, [ 'Test 1' ] ) ] ],
+						},
+						[]
+					),
+				] ),
+			] );
+			expect( container.outerHTML ).toBe(
+				'<div><template><div>Test 1</div></template></div>'
+			);
 		} );
 	} );
 

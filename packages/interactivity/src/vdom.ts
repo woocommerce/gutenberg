@@ -47,8 +47,6 @@ const directiveParser = new RegExp(
 const nsPathRegExp = /^([\w_\/-]+)::(.+)$/;
 
 export const hydratedIslands = new WeakSet();
-const nodesToRemove = new Set< Node >();
-const nodesToReplace = new Set< Node >();
 
 /**
  * Recursive function that transforms a DOM tree into vDOM.
@@ -57,6 +55,9 @@ const nodesToReplace = new Set< Node >();
  * @return The resulting vDOM tree.
  */
 export function toVdom( root: Node ): Array< ComponentChild > {
+	const nodesToRemove = new Set< Node >();
+	const nodesToReplace = new Set< Node >();
+
 	const treeWalker = document.createTreeWalker(
 		root,
 		205 // TEXT + CDATA_SECTION + COMMENT + PROCESSING_INSTRUCTION + ELEMENT
@@ -202,8 +203,6 @@ export function toVdom( root: Node ): Array< ComponentChild > {
 			new window.Text( ( node as CDATASection ).nodeValue ?? '' )
 		)
 	);
-	nodesToRemove.clear();
-	nodesToReplace.clear();
 
 	return vdom;
 }
