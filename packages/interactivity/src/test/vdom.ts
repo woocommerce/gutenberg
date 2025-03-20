@@ -38,23 +38,21 @@ describe( 'toVdom', () => {
 	describe( 'Basic node types', () => {
 		it( 'should convert text nodes to strings', () => {
 			const textNode = createElementFromHTML( 'Hello World' );
-			expect( toVdom( textNode ) ).toMatchVNode( [ 'Hello World' ] );
+			expect( toVdom( textNode ) ).toMatchVNode( 'Hello World' );
 		} );
 
 		it( 'should convert element nodes to vDOM elements', () => {
 			const element = createElementFromHTML( '<div></div>' );
-			expect( toVdom( element ) ).toMatchVNode( [
-				h( 'div', null, [] ),
-			] );
+			expect( toVdom( element ) ).toMatchVNode( h( 'div', null, [] ) );
 		} );
 
 		it( 'should handle nested elements', () => {
 			const element = createElementFromHTML(
 				'<div><span>Test 1</span>Test 2</div>'
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
-				h( 'div', null, [ h( 'span', null, [ 'Test 1' ] ), 'Test 2' ] ),
-			] );
+			expect( toVdom( element ) ).toMatchVNode(
+				h( 'div', null, [ h( 'span', null, [ 'Test 1' ] ), 'Test 2' ] )
+			);
 		} );
 
 		it( 'should convert CDATA sections to text nodes and continue to their siblings', () => {
@@ -64,7 +62,7 @@ describe( 'toVdom', () => {
 				'application/xml'
 			);
 			expect( toVdom( xml.querySelector( 'div' ) as Node ) ).toMatchVNode(
-				[ h( 'div', null, [ 'Test 1', 'CDATA content', 'Test 2' ] ) ]
+				h( 'div', null, [ 'Test 1', 'CDATA content', 'Test 2' ] )
 			);
 			expect( xml.querySelector( 'div' )?.outerHTML ).toBe(
 				'<div>Test 1CDATA contentTest 2</div>'
@@ -78,12 +76,10 @@ describe( 'toVdom', () => {
 				'application/xml'
 			);
 			expect( toVdom( xml.querySelector( 'div' ) as Node ) ).toMatchVNode(
-				[
-					h( 'div', null, [
-						h( 'div', null, [ 'Test 1', 'CDATA content' ] ),
-						h( 'div', null, [ 'Test 2' ] ),
-					] ),
-				]
+				h( 'div', null, [
+					h( 'div', null, [ 'Test 1', 'CDATA content' ] ),
+					h( 'div', null, [ 'Test 2' ] ),
+				] )
 			);
 			expect( xml.querySelector( 'div' )?.outerHTML ).toBe(
 				'<div><div>Test 1CDATA content</div><div>Test 2</div></div>'
@@ -94,9 +90,9 @@ describe( 'toVdom', () => {
 			const container = createElementFromHTML(
 				'<div>Test 1<!-- This is a comment --><div>Test 2</div></div>'
 			);
-			expect( toVdom( container ) ).toMatchVNode( [
-				h( 'div', null, [ 'Test 1', h( 'div', null, [ 'Test 2' ] ) ] ),
-			] );
+			expect( toVdom( container ) ).toMatchVNode(
+				h( 'div', null, [ 'Test 1', h( 'div', null, [ 'Test 2' ] ) ] )
+			);
 			expect( container.outerHTML ).toBe(
 				'<div>Test 1<div>Test 2</div></div>'
 			);
@@ -106,12 +102,12 @@ describe( 'toVdom', () => {
 			const container = createElementFromHTML(
 				'<div><div>Test 1<!-- This is a comment --><!-- This is another comment --></div><div>Test 2</div></div>'
 			);
-			expect( toVdom( container ) ).toMatchVNode( [
+			expect( toVdom( container ) ).toMatchVNode(
 				h( 'div', null, [
 					h( 'div', null, [ 'Test 1' ] ),
 					h( 'div', null, [ 'Test 2' ] ),
-				] ),
-			] );
+				] )
+			);
 			expect( container.outerHTML ).toBe(
 				'<div><div>Test 1</div><div>Test 2</div></div>'
 			);
@@ -121,12 +117,12 @@ describe( 'toVdom', () => {
 			const container = createElementFromHTML(
 				'<div><div>Test 1<!-- This is a comment --></div><div>Test 2</div></div>'
 			);
-			expect( toVdom( container ) ).toMatchVNode( [
+			expect( toVdom( container ) ).toMatchVNode(
 				h( 'div', null, [
 					h( 'div', null, [ 'Test 1' ] ),
 					h( 'div', null, [ 'Test 2' ] ),
-				] ),
-			] );
+				] )
+			);
 			expect( container.outerHTML ).toBe(
 				'<div><div>Test 1</div><div>Test 2</div></div>'
 			);
@@ -139,7 +135,7 @@ describe( 'toVdom', () => {
 				'application/xml'
 			);
 			expect( toVdom( xml.querySelector( 'div' ) as Node ) ).toMatchVNode(
-				[ h( 'div', null, [] ) ]
+				h( 'div', null, [] )
 			);
 			expect( xml.querySelector( 'div' )?.outerHTML ).toBe( '<div/>' );
 		} );
@@ -148,32 +144,32 @@ describe( 'toVdom', () => {
 			const template = createElementFromHTML(
 				`<template>Test</template>`
 			);
-			expect( toVdom( template ) ).toMatchVNode( [
+			expect( toVdom( template ) ).toMatchVNode(
 				h(
 					'template' as any,
 					{
-						content: [ [ 'Test' ] ],
+						content: [ 'Test' ],
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should remove comment nodes inside templates', () => {
 			const container = createElementFromHTML(
 				'<div><!-- This is a comment --><template><div>Test 1<!-- This is a comment --></div></template></div>'
 			);
-			expect( toVdom( container ) ).toMatchVNode( [
+			expect( toVdom( container ) ).toMatchVNode(
 				h( 'div', null, [
 					h(
 						'template' as any,
 						{
-							content: [ [ h( 'div', null, [ 'Test 1' ] ) ] ],
+							content: [ h( 'div', null, [ 'Test 1' ] ) ],
 						},
 						[]
 					),
-				] ),
-			] );
+				] )
+			);
 			expect( container.outerHTML ).toBe(
 				'<div><template><div>Test 1</div></template></div>'
 			);
@@ -185,7 +181,7 @@ describe( 'toVdom', () => {
 			const element = createElementFromHTML(
 				'<div id="test-id" class="test-class" data-test="test-value"></div>'
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -194,17 +190,17 @@ describe( 'toVdom', () => {
 						'data-test': 'test-value',
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should skip ref attributes', () => {
 			const element = createElementFromHTML(
 				'<div id="test-id" ref="some-ref"></div>'
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
-				h( 'div', { id: 'test-id' }, [] ),
-			] );
+			expect( toVdom( element ) ).toMatchVNode(
+				h( 'div', { id: 'test-id' }, [] )
+			);
 		} );
 
 		it( 'should warn about malformed directive names', () => {
@@ -229,7 +225,7 @@ describe( 'toVdom', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-test-one data-wp-test-two="test value"></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -253,15 +249,15 @@ describe( 'toVdom', () => {
 						},
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should parse JSON values in directives', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-test='{"key": "value"}'></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -277,15 +273,15 @@ describe( 'toVdom', () => {
 						},
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should handle malformed JSON and keep as string', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-test="{malformed: json}"></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -301,15 +297,15 @@ describe( 'toVdom', () => {
 						},
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should process directive suffixes', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-test--one="test value 1" data-wp-test--two="test value 2"></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -331,15 +327,15 @@ describe( 'toVdom', () => {
 						},
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should preserve values that JSON would parse but are not objects', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-test--one='true' data-wp-test--two='"test value"'></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -361,15 +357,15 @@ describe( 'toVdom', () => {
 						},
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should handle directives in template elements', () => {
 			const template = createElementFromHTML(
 				`<template data-wp-test="test value"><div></div></template>`
 			);
-			expect( toVdom( template ) ).toMatchVNode( [
+			expect( toVdom( template ) ).toMatchVNode(
 				h(
 					'template' as any,
 					{
@@ -383,45 +379,43 @@ describe( 'toVdom', () => {
 								},
 							],
 						},
-						content: [ [ h( 'div' as any, null, [] ) ] ],
+						content: [ h( 'div' as any, null, [] ) ],
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should handle directives inside template elements', () => {
 			const template = createElementFromHTML(
 				`<template><div data-wp-test="test value"></div></template>`
 			);
-			expect( toVdom( template ) ).toMatchVNode( [
+			expect( toVdom( template ) ).toMatchVNode(
 				h(
 					'template' as any,
 					{
 						content: [
-							[
-								h(
-									'div' as any,
-									{
-										'data-wp-test': 'test value',
-										__directives: {
-											test: [
-												{
-													namespace: null,
-													value: 'test value',
-													suffix: null,
-												},
-											],
-										},
+							h(
+								'div' as any,
+								{
+									'data-wp-test': 'test value',
+									__directives: {
+										test: [
+											{
+												namespace: null,
+												value: 'test value',
+												suffix: null,
+											},
+										],
 									},
-									[]
-								),
-							],
+								},
+								[]
+							),
 						],
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 	} );
 
@@ -430,7 +424,7 @@ describe( 'toVdom', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-test="my-namespace::test value"></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -446,15 +440,15 @@ describe( 'toVdom', () => {
 						},
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should parse JSON values with a custom namespace', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-test='my-namespace::{"key": "value"}'></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -470,15 +464,15 @@ describe( 'toVdom', () => {
 						},
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should use the default namespace provided in the same element', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-interactive="my-namespace" data-wp-test="test value"></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -495,15 +489,15 @@ describe( 'toVdom', () => {
 						},
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should override the default namespace provided in a parent element', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-interactive="parent-namespace"><div data-wp-interactive="my-namespace" data-wp-test="test value"></div></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -528,15 +522,15 @@ describe( 'toVdom', () => {
 							[]
 						),
 					]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should handle default namespaces provided in the a JSON object', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-interactive='{ "namespace": "my-namespace" }' data-wp-test="test value"></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -554,15 +548,15 @@ describe( 'toVdom', () => {
 						},
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should recover the parent default namespace after a closing element', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-interactive="parent-namespace"><div data-wp-interactive="child-namespace"></div><div data-wp-test="test value"></div></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -593,15 +587,15 @@ describe( 'toVdom', () => {
 							[]
 						),
 					]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should reset the default namespace after that last closing element', () => {
 			const element = createElementFromHTML(
 				`<div><div data-wp-interactive="my-namespace"></div><div data-wp-test="test value"></div></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h( 'div' as any, null, [
 					h(
 						'div' as any,
@@ -626,15 +620,15 @@ describe( 'toVdom', () => {
 						},
 						[]
 					),
-				] ),
-			] );
+				] )
+			);
 		} );
 
 		it( 'should override the default namespace with a custom one in the same element', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-interactive="my-namespace" data-wp-test="custom-namespace::test value"></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -651,15 +645,15 @@ describe( 'toVdom', () => {
 						},
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should override the default namespace with a custom one in a child element', () => {
 			const element = createElementFromHTML(
 				`<div data-wp-interactive="my-namespace"><div data-wp-test="custom-namespace::test value"></div></div>`
 			);
-			expect( toVdom( element ) ).toMatchVNode( [
+			expect( toVdom( element ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -683,50 +677,48 @@ describe( 'toVdom', () => {
 							[]
 						),
 					]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should pass down namespaces defined in template elements', () => {
 			const template = createElementFromHTML(
 				`<template data-wp-interactive="my-namespace"><div data-wp-test="test value"></div></template>`
 			);
-			expect( toVdom( template ) ).toMatchVNode( [
+			expect( toVdom( template ) ).toMatchVNode(
 				h(
 					'template' as any,
 					{
 						'data-wp-interactive': 'my-namespace',
 						content: [
-							[
-								h(
-									'div' as any,
-									{
-										'data-wp-test': 'test value',
-										__directives: {
-											test: [
-												{
-													namespace: 'my-namespace',
-													value: 'test value',
-													suffix: null,
-												},
-											],
-										},
+							h(
+								'div' as any,
+								{
+									'data-wp-test': 'test value',
+									__directives: {
+										test: [
+											{
+												namespace: 'my-namespace',
+												value: 'test value',
+												suffix: null,
+											},
+										],
 									},
-									[]
-								),
-							],
+								},
+								[]
+							),
 						],
 					},
 					[]
-				),
-			] );
+				)
+			);
 		} );
 
 		it( 'should pass down namespaces defined in template parents', () => {
 			const template = createElementFromHTML(
 				`<div data-wp-interactive="my-namespace"><template><div data-wp-test="test value"></div></template></div>`
 			);
-			expect( toVdom( template ) ).toMatchVNode( [
+			expect( toVdom( template ) ).toMatchVNode(
 				h(
 					'div' as any,
 					{
@@ -737,32 +729,30 @@ describe( 'toVdom', () => {
 							'template' as any,
 							{
 								content: [
-									[
-										h(
-											'div' as any,
-											{
-												'data-wp-test': 'test value',
-												__directives: {
-													test: [
-														{
-															namespace:
-																'my-namespace',
-															value: 'test value',
-															suffix: null,
-														},
-													],
-												},
+									h(
+										'div' as any,
+										{
+											'data-wp-test': 'test value',
+											__directives: {
+												test: [
+													{
+														namespace:
+															'my-namespace',
+														value: 'test value',
+														suffix: null,
+													},
+												],
 											},
-											[]
-										),
-									],
+										},
+										[]
+									),
 								],
 							},
 							[]
 						),
 					]
-				),
-			] );
+				)
+			);
 		} );
 	} );
 

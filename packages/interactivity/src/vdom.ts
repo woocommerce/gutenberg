@@ -54,7 +54,7 @@ export const hydratedIslands = new WeakSet();
  * @param root The root element or node to start traversing on.
  * @return The resulting vDOM tree.
  */
-export function toVdom( root: Node ): Array< ComponentChild > {
+export function toVdom( root: Node ): ComponentChild {
 	const nodesToRemove = new Set< Node >();
 	const nodesToReplace = new Set< Node >();
 
@@ -63,24 +63,24 @@ export function toVdom( root: Node ): Array< ComponentChild > {
 		205 // TEXT + CDATA_SECTION + COMMENT + PROCESSING_INSTRUCTION + ELEMENT
 	);
 
-	function walk( node: Node ): [ ComponentChild | null ] {
+	function walk( node: Node ): ComponentChild | null {
 		const { nodeType } = node;
 
 		// TEXT_NODE (3)
 		if ( nodeType === 3 ) {
-			return [ ( node as Text ).data ];
+			return ( node as Text ).data;
 		}
 
 		// CDATA_SECTION_NODE (4)
 		if ( nodeType === 4 ) {
 			nodesToReplace.add( node );
-			return [ node.nodeValue ];
+			return node.nodeValue;
 		}
 
 		// COMMENT_NODE (8) || PROCESSING_INSTRUCTION_NODE (7)
 		if ( nodeType === 8 || nodeType === 7 ) {
 			nodesToRemove.add( node );
-			return [ null ];
+			return null;
 		}
 
 		const elementNode = node as HTMLElement;
@@ -175,7 +175,7 @@ export function toVdom( root: Node ): Array< ComponentChild > {
 			let child = treeWalker.firstChild();
 			if ( child ) {
 				while ( child ) {
-					const [ vnode ] = walk( child );
+					const vnode = walk( child );
 					if ( vnode ) {
 						children.push( vnode );
 					}
@@ -190,7 +190,7 @@ export function toVdom( root: Node ): Array< ComponentChild > {
 			namespaces.pop();
 		}
 
-		return [ h( localName, props, children ) ];
+		return h( localName, props, children );
 	}
 
 	const vdom = walk( treeWalker.currentNode );
