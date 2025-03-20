@@ -47,6 +47,8 @@ const directiveParser = new RegExp(
 const nsPathRegExp = /^([\w_\/-]+)::(.+)$/;
 
 export const hydratedIslands = new WeakSet();
+const nodesToRemove = new Set< Node >();
+const nodesToReplace = new Set< Node >();
 
 /**
  * Recursive function that transforms a DOM tree into vDOM.
@@ -60,9 +62,7 @@ export function toVdom( root: Node ): Array< ComponentChild > {
 		205 // TEXT + CDATA_SECTION + COMMENT + PROCESSING_INSTRUCTION + ELEMENT
 	);
 
-	function walk(
-		node: Node
-	): [ ComponentChild ] | [ ComponentChild, Node | null ] {
+	function walk( node: Node ): [ ComponentChild | null ] {
 		const { nodeType } = node;
 
 		// TEXT_NODE (3)
@@ -72,18 +72,13 @@ export function toVdom( root: Node ): Array< ComponentChild > {
 
 		// CDATA_SECTION_NODE (4)
 		if ( nodeType === 4 ) {
-			const next = treeWalker.nextSibling();
-			( node as CDATASection ).replaceWith(
-				new window.Text( ( node as CDATASection ).nodeValue ?? '' )
-			);
-			return [ node.nodeValue, next ];
+			return [ node.nodeValue ];
 		}
 
 		// COMMENT_NODE (8) || PROCESSING_INSTRUCTION_NODE (7)
 		if ( nodeType === 8 || nodeType === 7 ) {
-			const next = treeWalker.nextSibling();
-			( node as Comment | ProcessingInstruction ).remove();
-			return [ null, next ];
+			nodesToRemove.add( node );
+			return [ null ];
 		}
 
 		const elementNode = node as HTMLElement;
@@ -178,11 +173,11 @@ export function toVdom( root: Node ): Array< ComponentChild > {
 			let child = treeWalker.firstChild();
 			if ( child ) {
 				while ( child ) {
-					const [ vnode, nextChild ] = walk( child );
+					const [ vnode ] = walk( child );
 					if ( vnode ) {
 						children.push( vnode );
 					}
-					child = nextChild || treeWalker.nextSibling();
+					child = treeWalker.nextSibling();
 				}
 				treeWalker.parentNode();
 			}
@@ -196,5 +191,18 @@ export function toVdom( root: Node ): Array< ComponentChild > {
 		return [ h( localName, props, children ) ];
 	}
 
-	return walk( treeWalker.currentNode );
+	const vdom = walk( treeWalker.currentNode );
+
+	nodesToRemove.forEach( ( node: Node ) =>
+		( node as Comment | ProcessingInstruction ).remove()
+	);
+	nodesToReplace.forEach( ( node: Node ) =>
+		( node as CDATASection ).replaceWith(
+			new window.Text( ( node as CDATASection ).nodeValue ?? '' )
+		)
+	);
+	nodesToRemove.clear();
+	nodesToReplace.clear();
+
+	return vdom;
 }
