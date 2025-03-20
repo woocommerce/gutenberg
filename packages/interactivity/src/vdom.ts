@@ -72,6 +72,7 @@ export function toVdom( root: Node ): Array< ComponentChild > {
 
 		// CDATA_SECTION_NODE (4)
 		if ( nodeType === 4 ) {
+			nodesToReplace.add( node );
 			return [ node.nodeValue ];
 		}
 

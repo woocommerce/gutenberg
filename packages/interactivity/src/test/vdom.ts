@@ -66,6 +66,9 @@ describe( 'toVdom', () => {
 			expect( toVdom( xml.querySelector( 'div' ) as Node ) ).toMatchVNode(
 				[ h( 'div', null, [ 'Test 1', 'CDATA content', 'Test 2' ] ) ]
 			);
+			expect( xml.querySelector( 'div' )?.outerHTML ).toBe(
+				'<div>Test 1CDATA contentTest 2</div>'
+			);
 		} );
 
 		it( 'should convert CDATA sections to text nodes and continue to their parent', () => {
@@ -81,6 +84,9 @@ describe( 'toVdom', () => {
 						h( 'div', null, [ 'Test 2' ] ),
 					] ),
 				]
+			);
+			expect( xml.querySelector( 'div' )?.outerHTML ).toBe(
+				'<div><div>Test 1CDATA content</div><div>Test 2</div></div>'
 			);
 		} );
 
