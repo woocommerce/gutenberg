@@ -21,7 +21,10 @@ const {
 	'I acknowledge that using private APIs means my theme or plugin will inevitably break in the next version of WordPress.'
 );
 
-interface NavigateOptions {
+const regionAttr = `data-${ directivePrefix }-router-region`;
+const interactiveAttr = `data-${ directivePrefix }-interactive`;
+
+export interface NavigateOptions {
 	force?: boolean;
 	html?: string;
 	replace?: boolean;
@@ -30,7 +33,7 @@ interface NavigateOptions {
 	screenReaderAnnouncement?: boolean;
 }
 
-interface PrefetchOptions {
+export interface PrefetchOptions {
 	force?: boolean;
 	html?: string;
 }
@@ -93,9 +96,10 @@ const regionsToVdom: RegionsToVdom = async ( dom, { vdom } = {} ) => {
 		}
 	}
 	if ( navigationMode === 'regionBased' ) {
-		const attrName = `data-${ directivePrefix }-router-region`;
-		dom.querySelectorAll( `[${ attrName }]` ).forEach( ( region ) => {
-			const id = region.getAttribute( attrName );
+		dom.querySelectorAll(
+			`[${ interactiveAttr }][${ regionAttr }]:not([${ interactiveAttr }] [${ interactiveAttr }])`
+		).forEach( ( region ) => {
+			const id = region.getAttribute( regionAttr );
 			regions[ id ] = vdom?.has( region )
 				? vdom.get( region )
 				: toVdom( region );
@@ -120,13 +124,14 @@ const renderRegions = async ( page: Page ) => {
 		}
 	}
 	if ( navigationMode === 'regionBased' ) {
-		const attrName = `data-${ directivePrefix }-router-region`;
 		batch( () => {
 			populateServerData( page.initialData );
 			document
-				.querySelectorAll( `[${ attrName }]` )
+				.querySelectorAll(
+					`[${ interactiveAttr }][${ regionAttr }]:not([${ interactiveAttr }] [${ interactiveAttr }])`
+				)
 				.forEach( ( region ) => {
-					const id = region.getAttribute( attrName );
+					const id = region.getAttribute( regionAttr );
 					const fragment = getRegionRootFragment( region );
 					render( page.regions[ id ], fragment );
 				} );
