@@ -469,7 +469,7 @@ describe( 'prepareStyles', () => {
 		doc.head.appendChild( style1 );
 		doc.head.appendChild( style2 );
 
-		prepareStyles( doc );
+		prepareStyles( doc, 'https://example.com/another-test-page' );
 
 		// Check that styles were extracted and added to the document
 		expect( document.querySelector( '#test-style-1' ) ).toBeTruthy();

@@ -207,7 +207,7 @@ const styleSheetCache = new Map< string, Promise< StyleElement >[] >();
  */
 export const prepareStyles = (
 	doc: Document,
-	url: string = ( doc.location || window.location ).href
+	url: string
 ): Promise< StyleElement >[] => {
 	if ( ! styleSheetCache.has( url ) ) {
 		const currentStyleElements = Array.from(
