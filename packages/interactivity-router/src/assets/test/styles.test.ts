@@ -501,7 +501,7 @@ describe( 'applyStyles', () => {
 		// Init `sheet` property
 		mockSheet( style1, { disabled: true, mediaText: 'all' } );
 		mockSheet( style2, { disabled: false, mediaText: 'all' } );
-		mockSheet( style3, { disabled: false, mediaText: 'prefetch' } );
+		mockSheet( style3, { disabled: false, mediaText: 'preload' } );
 
 		// Apply styles to only style1 and style3
 		applyStyles( [ style1, style3 ] );
@@ -515,10 +515,10 @@ describe( 'applyStyles', () => {
 	it( 'should set media appropriately based on originalMedia', () => {
 		// Create link elements with originalMedia
 		const link1 = createLinkElement( 'link1' );
-		link1.setAttribute( 'media', 'prefetch' );
+		link1.setAttribute( 'media', 'preload' );
 		link1.dataset.originalMedia = 'print';
 		const link2 = createLinkElement( 'link2' );
-		link2.setAttribute( 'media', 'prefetch' );
+		link2.setAttribute( 'media', 'preload' );
 		link2.dataset.originalMedia = 'screen';
 
 		// Add to document
@@ -526,8 +526,8 @@ describe( 'applyStyles', () => {
 		document.head.appendChild( link2 );
 
 		// Init `sheet` property
-		mockSheet( link1, { disabled: false, mediaText: 'prefetch' } );
-		mockSheet( link2, { disabled: false, mediaText: 'prefetch' } );
+		mockSheet( link1, { disabled: false, mediaText: 'preload' } );
+		mockSheet( link2, { disabled: false, mediaText: 'preload' } );
 
 		// Apply styles
 		applyStyles( [ link1, link2 ] );
@@ -541,8 +541,8 @@ describe( 'applyStyles', () => {
 		// Create elements without originalMedia
 		const link = createLinkElement( 'link' );
 		const style = createStyleElement( 'style' );
-		link.setAttribute( 'media', 'prefetch' );
-		style.setAttribute( 'media', 'prefetch' );
+		link.setAttribute( 'media', 'preload' );
+		style.setAttribute( 'media', 'preload' );
 
 		// Add to document
 		document.head.append( link, style );

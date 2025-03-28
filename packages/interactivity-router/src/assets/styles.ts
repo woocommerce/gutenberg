@@ -197,7 +197,7 @@ const styleSheetCache = new Map< string, Promise< StyleElement >[] >();
  * those present in the passed document end up in the DOM while the order
  * is respected.
  *
- * New appended style elements contain a `media=prefetch` attribute to
+ * New appended style elements contain a `media=preload` attribute to
  * make them effectively disabled until they are applied with the
  * {@link applyStyles|`applyStyles`} function.
  *
