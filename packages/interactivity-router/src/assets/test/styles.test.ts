@@ -85,7 +85,7 @@ describe( 'Router styles management', () => {
 			expect( promises.length ).toBe( 3 );
 			expect( parent.childNodes.length ).toBe( 3 );
 
-			// Verify elements are in the correct order
+			// Verify elements are in the correct order.
 			expect( parent.childNodes[ 0 ] ).toBe( Y[ 0 ] );
 			expect( parent.childNodes[ 1 ] ).toBe( Y[ 1 ] );
 			expect( parent.childNodes[ 2 ] ).toBe( Y[ 2 ] );
@@ -131,7 +131,7 @@ describe( 'Router styles management', () => {
 
 			expect( promises.length ).toBe( 2 );
 			expect( parent.childNodes.length ).toBe( 2 );
-			// Should maintain the original elements (not replace with clones)
+			// Should maintain the original elements (not replace with clones).
 			expect( parent.childNodes[ 0 ] ).toBe( X[ 0 ] );
 			expect( parent.childNodes[ 1 ] ).toBe( X[ 1 ] );
 		} );
@@ -176,8 +176,8 @@ describe( 'Router styles management', () => {
 
 			expect( promises.length ).toBe( 2 );
 
-			// Check the specific order - based on the SCS algorithm
-			// When X and Y are completely different, the SCS places
+			// Check the specific order - based on the SCS algorithm.
+			// When X and Y are completely different, the SCS places.
 			// all elements from Y before X.
 			expect( parent.childNodes[ 0 ] ).toBe( Y[ 0 ] );
 			expect( parent.childNodes[ 1 ] ).toBe( Y[ 1 ] );
@@ -186,7 +186,7 @@ describe( 'Router styles management', () => {
 		} );
 
 		it( 'should consider normalized media attributes when comparing elements', () => {
-			// These should be considered equal after normalizing the media attribute
+			// These should be considered equal after normalizing the media attribute.
 			const X = [ createLinkElement( 'same-link' ) ];
 			const Y = [ createLinkElement( 'same-link' ) ];
 
@@ -220,13 +220,13 @@ describe( 'Router styles management', () => {
 			const X = [ createLinkElement( 'link1' ) ];
 			const Y = [ createLinkElement( 'link1' ) ];
 
-			// First, add it to the DOM
+			// First, add it to the DOM.
 			const promises1 = updateStylesWithSCS( [], X, parent );
 
-			// Then, use it in a second call
+			// Then, use it in a second call.
 			const promises2 = updateStylesWithSCS( X, Y, parent );
 
-			// The promises should be the same
+			// The promises should be the same.
 			expect( promises1[ 0 ] ).toBe( promises2[ 0 ] );
 		} );
 
@@ -234,18 +234,18 @@ describe( 'Router styles management', () => {
 			const X = [ createStyleElement( 'style1' ) ];
 			const Y = [ createStyleElement( 'style1' ) ];
 
-			// First, add it to the DOM
+			// First, add it to the DOM.
 			const promises1 = updateStylesWithSCS( [], X, parent );
 
-			// Then, use it in a second call
+			// Then, use it in a second call.
 			const promises2 = updateStylesWithSCS( X, Y, parent );
 
-			// The promises should be the same
+			// The promises should be the same.
 			expect( promises1[ 0 ] ).toBe( promises2[ 0 ] );
 		} );
 
 		it( 'should handle complex reordering of elements maintaining the correct order', async () => {
-			// Initial set of elements
+			// Initial set of elements.
 			const style1 = createStyleElement( 'style1' );
 			const style2 = createStyleElement( 'style2' );
 			const style3 = createStyleElement( 'style3' );
@@ -254,7 +254,7 @@ describe( 'Router styles management', () => {
 			const X = [ style1, style2, style3, style4 ];
 			parent.append( ...X );
 
-			// New set with reordering and some new elements
+			// New set with reordering and some new elements.
 			const newStyle1 = createStyleElement( 'style1' );
 			const newStyle3 = createStyleElement( 'style3' );
 			const newStyle5 = createStyleElement( 'style5' );
@@ -267,7 +267,7 @@ describe( 'Router styles management', () => {
 
 			expect( promises.length ).toBe( 5 );
 
-			// Verify the exact order
+			// Verify the exact order.
 			expect( parent.childNodes[ 0 ] ).toBe( style1 );
 			expect( parent.childNodes[ 1 ] ).toBe( newStyle3 );
 			expect( parent.childNodes[ 2 ] ).toBe( newStyle5 );
@@ -276,7 +276,7 @@ describe( 'Router styles management', () => {
 			expect( parent.childNodes[ 5 ] ).toBe( style3 );
 			expect( parent.childNodes[ 6 ] ).toBe( style4 );
 
-			// Verify the promise values
+			// Verify the promise values.
 			const values = await Promise.all( promises );
 			expect( values[ 0 ] ).toBe( style1 );
 			expect( values[ 1 ] ).toBe( newStyle3 );
@@ -289,10 +289,10 @@ describe( 'Router styles management', () => {
 			const link1 = createLinkElement( 'link1' );
 			const promises = updateStylesWithSCS( [], [ link1 ], parent );
 
-			// Manually trigger a load event
+			// Manually trigger a load event.
 			link1.dispatchEvent( new Event( 'load' ) );
 
-			// The promise should resolve with the link element
+			// The promise should resolve with the link element.
 			const result = await promises[ 0 ];
 			expect( result ).toBe( link1 );
 		} );
@@ -333,9 +333,9 @@ describe( 'Router styles management', () => {
 			// Run the update using X and Y.
 			const promises = updateStylesWithSCS( X, Y, parent );
 
-			// Expected DOM outcome (based on the SCS algorithm):
+			// Expected DOM outcome (based on the SCS algorithm):.
 			// We expect that the existing link1 and link2 are reused, and the new link3 is inserted.
-			// The duplicate occurrences of link1 (via link1Clone and link1 itself in Y)
+			// The duplicate occurrences of link1 (via link1Clone and link1 itself in Y).
 			// should resolve to the original link1.
 			expect( parent.childNodes.length ).toBe( 7 );
 			expect( [ ...parent.childNodes ] ).toEqual( [
@@ -452,22 +452,22 @@ describe( 'Router styles management', () => {
 		} );
 	} );
 
-	// Tests for prepareStyles function
+	// Tests for prepareStyles function.
 	describe( 'prepareStyles', () => {
 		it( 'should use cached promises for the same URL', () => {
-			// Create a test document
+			// Create a test document.
 			const doc = document.implementation.createHTMLDocument();
 			const style = doc.createElement( 'style' );
 			doc.head.appendChild( style );
 
-			// First call should update the DOM
+			// First call should update the DOM.
 			const firstResult = prepareStyles(
 				doc,
 				'https://example.com/test'
 			);
 			expect( firstResult ).toBeTruthy();
 
-			// Second call should return the same promises
+			// Second call should return the same promises.
 			const secondResult = prepareStyles(
 				doc,
 				'https://example.com/test'
@@ -476,7 +476,7 @@ describe( 'Router styles management', () => {
 		} );
 
 		it( 'should extract style elements from the provided document', () => {
-			// Create a test document with style elements
+			// Create a test document with style elements.
 			const doc = document.implementation.createHTMLDocument();
 			const style1 = doc.createElement( 'style' );
 			style1.id = 'test-style-1';
@@ -488,41 +488,41 @@ describe( 'Router styles management', () => {
 
 			prepareStyles( doc, 'https://example.com/another-test-page' );
 
-			// Check that styles were extracted and added to the document
+			// Check that styles were extracted and added to the document.
 			expect( document.querySelector( '#test-style-1' ) ).toBeTruthy();
 			expect( document.querySelector( '#test-link-1' ) ).toBeTruthy();
 		} );
 	} );
 
-	// Tests for applyStyles function
+	// Tests for applyStyles function.
 	describe( 'applyStyles', () => {
 		it( 'should enable included styles and disable others', () => {
-			// Create some style elements
+			// Create some style elements.
 			const style1 = createStyleElement( 'style1' );
 			const style2 = createStyleElement( 'style2' );
 			const style3 = createStyleElement( 'style3' );
 
-			// Add all to document
+			// Add all to document.
 			document.head.appendChild( style1 );
 			document.head.appendChild( style2 );
 			document.head.appendChild( style3 );
 
-			// Init `sheet` property
+			// Init `sheet` property.
 			mockSheet( style1, { disabled: true, mediaText: 'all' } );
 			mockSheet( style2, { disabled: false, mediaText: 'all' } );
 			mockSheet( style3, { disabled: false, mediaText: 'preload' } );
 
-			// Apply styles to only style1 and style3
+			// Apply styles to only style1 and style3.
 			applyStyles( [ style1, style3 ] );
 
-			// style1 and style3 should be enabled, style2 should be disabled
+			// style1 and style3 should be enabled, style2 should be disabled.
 			expect( style1.sheet!.disabled ).toBe( false );
 			expect( style2.sheet!.disabled ).toBe( true );
 			expect( style3.sheet!.disabled ).toBe( false );
 		} );
 
 		it( 'should set media appropriately based on originalMedia', () => {
-			// Create link elements with originalMedia
+			// Create link elements with originalMedia.
 			const link1 = createLinkElement( 'link1' );
 			link1.setAttribute( 'media', 'preload' );
 			link1.dataset.originalMedia = 'print';
@@ -530,40 +530,40 @@ describe( 'Router styles management', () => {
 			link2.setAttribute( 'media', 'preload' );
 			link2.dataset.originalMedia = 'screen';
 
-			// Add to document
+			// Add to document.
 			document.head.appendChild( link1 );
 			document.head.appendChild( link2 );
 
-			// Init `sheet` property
+			// Init `sheet` property.
 			mockSheet( link1, { disabled: false, mediaText: 'preload' } );
 			mockSheet( link2, { disabled: false, mediaText: 'preload' } );
 
-			// Apply styles
+			// Apply styles.
 			applyStyles( [ link1, link2 ] );
 
-			// Check that media was set correctly
+			// Check that media was set correctly.
 			expect( link1.sheet!.media.mediaText ).toBe( 'print' );
 			expect( link2.sheet!.media.mediaText ).toBe( 'screen' );
 		} );
 
 		it( 'should use "all" as default media if no originalMedia specified', () => {
-			// Create elements without originalMedia
+			// Create elements without originalMedia.
 			const link = createLinkElement( 'link' );
 			const style = createStyleElement( 'style' );
 			link.setAttribute( 'media', 'preload' );
 			style.setAttribute( 'media', 'preload' );
 
-			// Add to document
+			// Add to document.
 			document.head.append( link, style );
 
-			// Init `sheet` property
+			// Init `sheet` property.
 			mockSheet( link, { disabled: false, mediaText: 'preload' } );
 			mockSheet( style, { disabled: false, mediaText: 'preload' } );
 
-			// Apply styles
+			// Apply styles.
 			applyStyles( [ link, style ] );
 
-			// Default should be "all"
+			// Default should be "all".
 			expect( link.sheet!.media.mediaText ).toBe( 'all' );
 			expect( style.sheet!.media.mediaText ).toBe( 'all' );
 		} );
