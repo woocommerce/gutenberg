@@ -145,6 +145,9 @@ const prepareStylePromise = (
 		return stylePromiseCache.get( element );
 	}
 
+	// When the `sheet` property is different from null, that means the
+	// element exists in the DOM and the style sheet has been loaded.
+	// The `media` attribute doesn't need to be handled in this case.
 	if ( element.sheet ) {
 		const promise = Promise.resolve( element );
 		stylePromiseCache.set( element, promise );
