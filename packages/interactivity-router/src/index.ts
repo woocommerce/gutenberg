@@ -197,7 +197,7 @@ pages.set(
 	Promise.resolve(
 		regionsToVdom( document, {
 			vdom: initialVdom,
-			url: window.location.href,
+			url: getPagePath( window.location.href ),
 		} )
 	)
 );
