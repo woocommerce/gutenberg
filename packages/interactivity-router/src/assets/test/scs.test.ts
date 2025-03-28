@@ -187,7 +187,6 @@ describe( 'shortestCommonSupersequence', () => {
 		} );
 	} );
 
-	// ORDERING TESTS
 	describe( 'Order preservation', () => {
 		it( 'should preserve order of elements from input arrays', () => {
 			const X = [ 1, 3, 5 ];
