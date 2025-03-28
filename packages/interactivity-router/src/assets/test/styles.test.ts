@@ -288,7 +288,7 @@ describe( 'updateStylesWithSCS', () => {
 		link1.dispatchEvent( errorEvent );
 
 		await expect( promises[ 0 ] ).rejects.toThrow(
-			`The style sheet with the following URL failed to load. ${ link1.href }`
+			`The style sheet with the following URL failed to load: ${ link1.href }`
 		);
 	} );
 

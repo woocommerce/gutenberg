@@ -169,7 +169,7 @@ const prepareStylePromise = (
 			const { href } = event.target as HTMLLinkElement;
 			reject(
 				Error(
-					`The style sheet with the following URL failed to load. ${ href }`
+					`The style sheet with the following URL failed to load: ${ href }`
 				)
 			);
 		} );
