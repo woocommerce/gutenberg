@@ -8,6 +8,14 @@ import {
 	type StyleElement,
 } from '../styles';
 
+/**
+ * Mock the `sheet` property or the for the
+ * passed HTMLStyleElement or HTMLLinkElement instance.
+ * @param element          Style or Link element.
+ * @param params           Values for certain props.
+ * @param params.disabled  Value for the `sheet.disabled` prop.
+ * @param params.mediaText Value for the `sheet.media.mediaText` prop.
+ */
 const mockSheet = (
 	element: StyleElement,
 	{ disabled, mediaText }: { disabled: boolean; mediaText: string }
@@ -24,7 +32,11 @@ const mockSheet = (
 	}
 };
 
-// Mock DOM elements for testing
+/**
+ * Create an `HTMLStyleElement` instance for testing.
+ * @param id Value for the `id` attribute.
+ * @return An `HTMLStyleElement` instance.
+ */
 const createStyleElement = ( id: string ): HTMLStyleElement => {
 	const element = document.createElement( 'style' );
 	element.id = id;
@@ -32,6 +44,12 @@ const createStyleElement = ( id: string ): HTMLStyleElement => {
 	return element;
 };
 
+/**
+ * Create an `HTMLLinkElement` instance for testing.
+ * @param id   Value for the `id` attribute.
+ * @param href Value for the `href` attribute.
+ * @return An `HTMLLinkElement` instance.
+ */
 const createLinkElement = (
 	id: string,
 	href: string = `https://example.com/${ id }.css`
