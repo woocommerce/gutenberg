@@ -35,17 +35,14 @@ const areNodesEqual = ( a: StyleElement, b: StyleElement ): boolean =>
  */
 export const normalizeMedia = ( element: StyleElement ): StyleElement => {
 	element = element.cloneNode( true ) as StyleElement;
-	if ( element.getAttribute( 'media' ) === 'preload' ) {
-		const { originalMedia } = element.dataset;
-		if ( element.hasAttribute( 'data-original-media' ) ) {
-			element.setAttribute( 'media', originalMedia );
-			element.removeAttribute( 'data-original-media' );
-		} else {
-			element.removeAttribute( 'media' );
-		}
-	}
-	if ( ! element.media ) {
-		element.setAttribute( 'media', 'all' );
+	const media = element.media;
+	const { originalMedia } = element.dataset;
+
+	if ( media === 'preload' ) {
+		element.media = originalMedia || 'all';
+		element.removeAttribute( 'data-original-media' );
+	} else if ( ! element.media ) {
+		element.media = 'all';
 	}
 	return element;
 };
