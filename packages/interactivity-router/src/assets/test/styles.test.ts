@@ -2,6 +2,7 @@
  * Internal dependencies
  */
 import {
+	normalizeMedia,
 	updateStylesWithSCS,
 	prepareStyles,
 	applyStyles,
@@ -566,6 +567,129 @@ describe( 'Router styles management', () => {
 			// Default should be "all".
 			expect( link.sheet!.media.mediaText ).toBe( 'all' );
 			expect( style.sheet!.media.mediaText ).toBe( 'all' );
+		} );
+	} );
+
+	describe( 'normalizeMedia', () => {
+		let linkElement: HTMLLinkElement;
+		let styleElement: HTMLStyleElement;
+
+		beforeEach( () => {
+			// Create fresh elements before each test
+			linkElement = document.createElement( 'link' );
+			linkElement.rel = 'stylesheet';
+			linkElement.href = './styles.css';
+
+			styleElement = document.createElement( 'style' );
+			styleElement.textContent = 'body { color: red; }';
+		} );
+
+		it( 'should always return a clone of the element', () => {
+			// Test with no media attribute
+			const result1 = normalizeMedia( linkElement );
+			expect( result1 ).not.toBe( linkElement );
+			expect( result1 ).toHaveAttribute( 'media', 'all' );
+
+			// Test with media attribute other than "preload"
+			linkElement.setAttribute( 'media', 'all' );
+			const result2 = normalizeMedia( linkElement );
+			expect( result2 ).not.toBe( linkElement );
+			expect( result2 ).toHaveAttribute( 'media', 'all' );
+
+			linkElement.setAttribute( 'media', 'preload' );
+			const result3 = normalizeMedia( linkElement );
+			expect( result3 ).not.toBe( linkElement );
+			expect( result3 ).toHaveAttribute(
+				'href',
+				linkElement.getAttribute( 'href' )
+			);
+		} );
+
+		it( 'should remove media attribute when media="preload" and no data-original-media exists', () => {
+			linkElement.setAttribute( 'media', 'preload' );
+			const result = normalizeMedia( linkElement );
+			expect( result ).toHaveAttribute( 'media', 'all' );
+		} );
+
+		it( 'should restore original media when media="preload" and data-original-media exists', () => {
+			linkElement.setAttribute( 'media', 'preload' );
+			linkElement.dataset.originalMedia = 'all';
+			const result = normalizeMedia( linkElement );
+			expect( result ).toHaveAttribute( 'media', 'all' );
+			expect( result.dataset.originalMedia ).toBeUndefined();
+		} );
+
+		it( 'should work with style elements too', () => {
+			styleElement.setAttribute( 'media', 'preload' );
+			styleElement.dataset.originalMedia = 'print';
+			const result = normalizeMedia( styleElement );
+			expect( result ).not.toBe( styleElement );
+			expect( result ).toHaveAttribute( 'media', 'print' );
+			expect( result.dataset.originalMedia ).toBeUndefined();
+		} );
+
+		it( 'should handle empty original media correctly', () => {
+			linkElement.setAttribute( 'media', 'preload' );
+			linkElement.dataset.originalMedia = '';
+			const result = normalizeMedia( linkElement );
+			expect( result ).toHaveAttribute( 'media', 'all' );
+			expect( result.dataset.originalMedia ).toBeUndefined();
+		} );
+
+		it( 'should preserve other attributes when normalizing', () => {
+			linkElement.setAttribute( 'media', 'preload' );
+			linkElement.dataset.originalMedia = 'all';
+			linkElement.setAttribute( 'data-test', 'value' );
+			linkElement.setAttribute( 'integrity', 'hash123' );
+
+			const result = normalizeMedia( linkElement );
+			expect( result ).toHaveAttribute( 'media', 'all' );
+			expect( result ).toHaveAttribute( 'data-test', 'value' );
+			expect( result ).toHaveAttribute( 'integrity', 'hash123' );
+		} );
+
+		it( 'should output the same for equivalent link elements', () => {
+			const head = document.createElement( 'head' );
+			head.innerHTML = `
+				<link rel="stylesheet" src="./assets/styles.css">
+				<link rel="stylesheet" src="./assets/styles.css" media="all">
+				<link rel="stylesheet" src="./assets/styles.css" media="preload">
+				<link rel="stylesheet" src="./assets/styles.css" media="preload" data-original-media="all">
+			`;
+
+			const links = [ ...head.childNodes ]
+				.filter( ( e ) => e instanceof HTMLLinkElement )
+				.map( normalizeMedia );
+
+			expect( links[ 0 ].isEqualNode( links[ 1 ] ) ).toBe( true );
+			expect( links[ 0 ].isEqualNode( links[ 2 ] ) ).toBe( true );
+			expect( links[ 0 ].isEqualNode( links[ 3 ] ) ).toBe( true );
+		} );
+
+		it( 'should output the same for equivalent style elements', () => {
+			const head = document.createElement( 'head' );
+			head.innerHTML = `
+				<style>
+					body { background: pink; }
+				</style>
+				<style media="all">
+					body { background: pink; }
+				</style>
+				<style media="preload">
+					body { background: pink; }
+				</style>
+				<style media="preload" data-original-media="all">
+					body { background: pink; }
+				</style>
+			`;
+
+			const styles = [ ...head.childNodes ]
+				.filter( ( e ) => e instanceof HTMLStyleElement )
+				.map( normalizeMedia );
+
+			expect( styles[ 0 ].isEqualNode( styles[ 1 ] ) ).toBe( true );
+			expect( styles[ 0 ].isEqualNode( styles[ 2 ] ) ).toBe( true );
+			expect( styles[ 0 ].isEqualNode( styles[ 3 ] ) ).toBe( true );
 		} );
 	} );
 } );
