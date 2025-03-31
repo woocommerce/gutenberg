@@ -6,7 +6,7 @@ import { store, privateApis, getConfig } from '@wordpress/interactivity';
 /**
  * Internal dependencies
  */
-import { fetchHeadAssets, updateHead, headElements } from './head';
+import { prepareStyles, applyStyles, type StyleElement } from './assets/styles';
 
 const {
 	directivePrefix,
@@ -40,16 +40,19 @@ export interface PrefetchOptions {
 
 interface VdomParams {
 	vdom?: typeof initialVdom;
+	url?: string;
 }
 
 interface Page {
+	url: string;
 	regions: Record< string, any >;
-	head: HTMLHeadElement[];
+	styles: Promise< StyleElement >[];
+	scriptModules: string[];
 	title: string;
 	initialData: any;
 }
 
-type RegionsToVdom = ( dom: Document, params?: VdomParams ) => Promise< Page >;
+type RegionsToVdom = ( dom: Document, params?: VdomParams ) => Page;
 
 // Check if the navigation mode is full page or region based.
 const navigationMode: 'regionBased' | 'fullPage' =
@@ -76,7 +79,7 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 			html = await res.text();
 		}
 		const dom = new window.DOMParser().parseFromString( html, 'text/html' );
-		return regionsToVdom( dom );
+		return regionsToVdom( dom, { url } );
 	} catch ( e ) {
 		return false;
 	}
@@ -84,12 +87,17 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 
 // Return an object with VDOM trees of those HTML regions marked with a
 // `router-region` directive.
-const regionsToVdom: RegionsToVdom = async ( dom, { vdom } = {} ) => {
+const regionsToVdom: RegionsToVdom = ( dom, { vdom, url } = {} ) => {
 	const regions = { body: undefined };
-	let head: HTMLElement[];
+	const styles = prepareStyles( dom, url );
+	const scriptModules = [
+		...dom.querySelectorAll< HTMLScriptElement >(
+			'script[type=module][src]'
+		),
+	].map( ( s ) => s.src );
+
 	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
 		if ( navigationMode === 'fullPage' ) {
-			head = await fetchHeadAssets( dom );
 			regions.body = vdom
 				? vdom.get( document.body )
 				: toVdom( dom.body );
@@ -107,15 +115,25 @@ const regionsToVdom: RegionsToVdom = async ( dom, { vdom } = {} ) => {
 	}
 	const title = dom.querySelector( 'title' )?.innerText;
 	const initialData = parseServerData( dom );
-	return { regions, head, title, initialData };
+	return { regions, styles, scriptModules, title, initialData, url };
 };
 
 // Render all interactive regions contained in the given page.
 const renderRegions = async ( page: Page ) => {
+	// Wait for styles and modules to be ready.
+	await Promise.all( [
+		...page.styles,
+		...page.scriptModules.map(
+			( src ) => import( /* webpackIgnore: true */ src )
+		),
+	] );
+	// Replace style sheets.
+	const styles = await Promise.all( page.styles );
+	applyStyles( styles );
+
 	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
 		if ( navigationMode === 'fullPage' ) {
-			// Once this code is tested and more mature, the head should be updated for region based navigation as well.
-			await updateHead( page.head );
+			// Update HTML.
 			const fragment = getRegionRootFragment( document.body );
 			batch( () => {
 				populateServerData( page.initialData );
@@ -174,23 +192,14 @@ window.addEventListener( 'popstate', async () => {
 // Initialize the router and cache the initial page using the initial vDOM.
 // Once this code is tested and more mature, the head should be updated for
 // region based navigation as well.
-if ( globalThis.IS_GUTENBERG_PLUGIN ) {
-	if ( navigationMode === 'fullPage' ) {
-		// Cache the scripts. Has to be called before fetching the assets.
-		[].map.call(
-			document.querySelectorAll( 'script[type="module"][src]' ),
-			( script ) => {
-				headElements.set( script.getAttribute( 'src' ), {
-					tag: script,
-				} );
-			}
-		);
-		await fetchHeadAssets( document );
-	}
-}
 pages.set(
 	getPagePath( window.location.href ),
-	Promise.resolve( regionsToVdom( document, { vdom: initialVdom } ) )
+	Promise.resolve(
+		regionsToVdom( document, {
+			vdom: initialVdom,
+			url: getPagePath( window.location.href ),
+		} )
+	)
 );
 
 // Check if the link is valid for client-side navigation.
@@ -323,7 +332,13 @@ export const { state, actions } = store< Store >( 'core/router', {
 				! page.initialData?.config?.[ 'core/router' ]
 					?.clientNavigationDisabled
 			) {
-				yield renderRegions( page );
+				try {
+					yield renderRegions( page );
+				} catch ( e ) {
+					// eslint-disable-next-line no-console
+					console.warn( e );
+					yield forcePageReload( href );
+				}
 				window.history[
 					options.replace ? 'replaceState' : 'pushState'
 				]( {}, '', href );
