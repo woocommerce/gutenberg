@@ -113,13 +113,19 @@ describe( 'Router styles management', () => {
 			parent.append( ...X );
 
 			const promises = updateStylesWithSCS( X, [], parent );
+			const { childNodes } = parent;
 
 			// No new promises should be generated.
 			expect( promises.length ).toBe( 0 );
+
 			// The DOM should still only have the original X elements.
-			expect( parent.childNodes.length ).toBe( X.length );
-			expect( parent.childNodes[ 0 ] ).toBe( style1 );
-			expect( parent.childNodes[ 1 ] ).toBe( style2 );
+			expect( childNodes.length ).toBe( X.length );
+			expect( childNodes[ 0 ] ).toBe( style1 );
+			expect( childNodes[ 1 ] ).toBe( style2 );
+
+			// Verify the correct media attribute is set.
+			expect( childNodes[ 0 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 1 ] ).not.toHaveAttribute( 'media', 'preload' );
 		} );
 
 		it( 'should keep existing elements when they match in both X and Y', () => {
@@ -135,12 +141,18 @@ describe( 'Router styles management', () => {
 			parent.append( ...X );
 
 			const promises = updateStylesWithSCS( X, Y, parent );
+			const { childNodes } = parent;
 
 			expect( promises.length ).toBe( 2 );
-			expect( parent.childNodes.length ).toBe( 2 );
+			expect( childNodes.length ).toBe( 2 );
+
 			// Should maintain the original elements (not replace with clones).
-			expect( parent.childNodes[ 0 ] ).toBe( X[ 0 ] );
-			expect( parent.childNodes[ 1 ] ).toBe( X[ 1 ] );
+			expect( childNodes[ 0 ] ).toBe( X[ 0 ] );
+			expect( childNodes[ 1 ] ).toBe( X[ 1 ] );
+
+			// Verify the correct media attribute is set.
+			expect( childNodes[ 0 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 1 ] ).not.toHaveAttribute( 'media', 'preload' );
 		} );
 
 		it( 'should insert new elements from Y in correct positions relative to X', () => {
@@ -158,13 +170,20 @@ describe( 'Router styles management', () => {
 			parent.append( ...X );
 
 			const promises = updateStylesWithSCS( X, Y, parent );
+			const { childNodes } = parent;
 
 			expect( promises.length ).toBe( 4 );
-			expect( parent.childNodes.length ).toBe( 4 );
-			expect( parent.childNodes[ 0 ] ).toBe( X[ 0 ] );
-			expect( parent.childNodes[ 1 ] ).toBe( Y[ 1 ] );
-			expect( parent.childNodes[ 2 ] ).toBe( X[ 1 ] );
-			expect( parent.childNodes[ 3 ] ).toBe( Y[ 3 ] );
+			expect( childNodes.length ).toBe( 4 );
+			expect( childNodes[ 0 ] ).toBe( X[ 0 ] );
+			expect( childNodes[ 1 ] ).toBe( Y[ 1 ] );
+			expect( childNodes[ 2 ] ).toBe( X[ 1 ] );
+			expect( childNodes[ 3 ] ).toBe( Y[ 3 ] );
+
+			// Verify the correct media attribute is set.
+			expect( childNodes[ 0 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 1 ] ).toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 2 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 3 ] ).toHaveAttribute( 'media', 'preload' );
 		} );
 
 		it( 'should handle Y having completely different elements than X', () => {
@@ -180,16 +199,23 @@ describe( 'Router styles management', () => {
 			parent.append( ...X );
 
 			const promises = updateStylesWithSCS( X, Y, parent );
+			const { childNodes } = parent;
 
 			expect( promises.length ).toBe( 2 );
 
 			// Check the specific order - based on the SCS algorithm.
 			// When X and Y are completely different, the SCS places.
 			// all elements from Y before X.
-			expect( parent.childNodes[ 0 ] ).toBe( Y[ 0 ] );
-			expect( parent.childNodes[ 1 ] ).toBe( Y[ 1 ] );
-			expect( parent.childNodes[ 2 ] ).toBe( X[ 0 ] );
-			expect( parent.childNodes[ 3 ] ).toBe( X[ 1 ] );
+			expect( childNodes[ 0 ] ).toBe( Y[ 0 ] );
+			expect( childNodes[ 1 ] ).toBe( Y[ 1 ] );
+			expect( childNodes[ 2 ] ).toBe( X[ 0 ] );
+			expect( childNodes[ 3 ] ).toBe( X[ 1 ] );
+
+			// Verify the correct media attribute is set.
+			expect( childNodes[ 0 ] ).toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 1 ] ).toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 2 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 3 ] ).not.toHaveAttribute( 'media', 'preload' );
 		} );
 
 		it( 'should consider normalized media attributes when comparing elements', () => {
@@ -205,10 +231,14 @@ describe( 'Router styles management', () => {
 			parent.append( ...X );
 
 			const promises = updateStylesWithSCS( X, Y, parent );
+			const { childNodes } = parent;
 
-			expect( parent.childNodes.length ).toBe( 1 );
+			expect( childNodes.length ).toBe( 1 );
 			expect( promises.length ).toBe( 1 );
-			expect( parent.childNodes[ 0 ] ).toBe( X[ 0 ] );
+			expect( childNodes[ 0 ] ).toBe( X[ 0 ] );
+
+			// Verify the media attribute has not changed.
+			expect( childNodes[ 0 ] ).toHaveAttribute( 'media', 'preload' );
 		} );
 
 		it( 'should treat style elements as already loaded', async () => {
@@ -271,17 +301,18 @@ describe( 'Router styles management', () => {
 			const Y = [ newStyle1, newStyle3, newStyle5, newStyle2, newStyle6 ];
 
 			const promises = updateStylesWithSCS( X, Y, parent );
+			const { childNodes } = parent;
 
 			expect( promises.length ).toBe( 5 );
 
 			// Verify the exact order.
-			expect( parent.childNodes[ 0 ] ).toBe( style1 );
-			expect( parent.childNodes[ 1 ] ).toBe( newStyle3 );
-			expect( parent.childNodes[ 2 ] ).toBe( newStyle5 );
-			expect( parent.childNodes[ 3 ] ).toBe( style2 );
-			expect( parent.childNodes[ 4 ] ).toBe( newStyle6 );
-			expect( parent.childNodes[ 5 ] ).toBe( style3 );
-			expect( parent.childNodes[ 6 ] ).toBe( style4 );
+			expect( childNodes[ 0 ] ).toBe( style1 );
+			expect( childNodes[ 1 ] ).toBe( newStyle3 );
+			expect( childNodes[ 2 ] ).toBe( newStyle5 );
+			expect( childNodes[ 3 ] ).toBe( style2 );
+			expect( childNodes[ 4 ] ).toBe( newStyle6 );
+			expect( childNodes[ 5 ] ).toBe( style3 );
+			expect( childNodes[ 6 ] ).toBe( style4 );
 
 			// Verify the promise values.
 			const values = await Promise.all( promises );
@@ -290,6 +321,15 @@ describe( 'Router styles management', () => {
 			expect( values[ 2 ] ).toBe( newStyle5 );
 			expect( values[ 3 ] ).toBe( style2 );
 			expect( values[ 4 ] ).toBe( newStyle6 );
+
+			// Verify the correct media attribute is set.
+			expect( childNodes[ 0 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 1 ] ).toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 2 ] ).toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 3 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 4 ] ).toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 5 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 6 ] ).not.toHaveAttribute( 'media', 'preload' );
 		} );
 
 		it( 'should handle link elements with load events', async () => {
@@ -339,13 +379,14 @@ describe( 'Router styles management', () => {
 
 			// Run the update using X and Y.
 			const promises = updateStylesWithSCS( X, Y, parent );
+			const { childNodes } = parent;
 
 			// Expected DOM outcome (based on the SCS algorithm):.
 			// We expect that the existing link1 and link2 are reused, and the new link3 is inserted.
 			// The duplicate occurrences of link1 (via link1Clone and link1 itself in Y).
 			// should resolve to the original link1.
-			expect( parent.childNodes.length ).toBe( 7 );
-			expect( [ ...parent.childNodes ] ).toEqual( [
+			expect( childNodes.length ).toBe( 7 );
+			expect( [ ...childNodes ] ).toEqual( [
 				X[ 0 ],
 				Y[ 1 ],
 				X[ 1 ],
@@ -355,8 +396,8 @@ describe( 'Router styles management', () => {
 				X[ 4 ],
 			] );
 
-			( parent.childNodes as NodeListOf< StyleElement > ).forEach(
-				( element ) => element.dispatchEvent( new Event( 'load' ) )
+			( childNodes as NodeListOf< StyleElement > ).forEach( ( element ) =>
+				element.dispatchEvent( new Event( 'load' ) )
 			);
 
 			// Verify that the returned promises resolve to the appropriate elements.
@@ -371,6 +412,15 @@ describe( 'Router styles management', () => {
 				X[ 3 ],
 				Y[ 5 ],
 			] );
+
+			// Verify the correct media attribute is set.
+			expect( childNodes[ 0 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 1 ] ).toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 2 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 3 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 4 ] ).not.toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 5 ] ).toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 6 ] ).not.toHaveAttribute( 'media', 'preload' );
 		} );
 
 		it( 'should set media and data-original-media correctly on new elements', async () => {
@@ -496,8 +546,12 @@ describe( 'Router styles management', () => {
 			prepareStyles( doc, 'https://example.com/another-test-page' );
 
 			// Check that styles were extracted and added to the document.
-			expect( document.querySelector( '#test-style-1' ) ).toBeTruthy();
-			expect( document.querySelector( '#test-link-1' ) ).toBeTruthy();
+			const addedStyle1 = document.querySelector( '#test-style-1' );
+			const addedLink1 = document.querySelector( '#test-link-1' );
+			expect( addedStyle1 ).toBeTruthy();
+			expect( addedLink1 ).toBeTruthy();
+			expect( addedStyle1 ).toHaveAttribute( 'media', 'preload' );
+			expect( addedLink1 ).toHaveAttribute( 'media', 'preload' );
 		} );
 	} );
 
