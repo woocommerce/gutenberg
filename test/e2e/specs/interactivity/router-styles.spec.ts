@@ -314,11 +314,19 @@ test.describe( 'Router styles', () => {
 	test( 'should not cause race conditions during render', async ( {
 		page,
 	} ) => {
-		// Setup a route handler to hold requests to the red stylesheet
-		// until manually resolved.
+		let requestStyle: ( value?: unknown ) => void;
 		let resolveStyle: ( value?: unknown ) => void;
+
+		// Promise that will resolve once the target style is intercepted.
+		// See the `page.route()` below.
+		const styleHasBeenRequested = new Promise(
+			( resolve ) => ( requestStyle = resolve )
+		);
+
+		// Setup a route handler to intercept styles.
 		const linkPattern = '**/router-styles-red/style-from-link.css*';
 		await page.route( linkPattern, async ( route ) => {
+			requestStyle();
 			await new Promise( ( resolve ) => ( resolveStyle = resolve ) );
 			await route.continue();
 		} );
@@ -328,7 +336,6 @@ test.describe( 'Router styles', () => {
 		const green = page.getByTestId( 'green-from-inline' );
 		const blue = page.getByTestId( 'blue-from-inline' );
 		const all = page.getByTestId( 'all-from-inline' );
-		const prefetching = page.getByTestId( 'prefetching' );
 
 		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
@@ -337,8 +344,8 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link red' ).hover();
 
-		// Wait until the prefetching has finished.
-		await expect( prefetching ).toHaveText( 'false' );
+		// Wait until the style has been requested.
+		await styleHasBeenRequested;
 
 		await page.getByTestId( 'link red' ).click();
 
@@ -356,8 +363,10 @@ test.describe( 'Router styles', () => {
 		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( all ).toHaveCSS( 'color', COLOR_GREEN );
 
+		// Resolve the requested style.
 		resolveStyle!();
 
+		// Styles should not change.
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
