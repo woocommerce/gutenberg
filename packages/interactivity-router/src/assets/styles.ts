@@ -75,8 +75,9 @@ export function updateStylesWithSCS(
 ) {
 	if ( X.length === 0 ) {
 		return Y.map( ( element ) => {
+			const promise = prepareStylePromise( element );
 			parent.appendChild( element );
-			return prepareStylePromise( element );
+			return promise;
 		} );
 	}
 

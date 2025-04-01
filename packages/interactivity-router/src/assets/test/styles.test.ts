@@ -82,14 +82,20 @@ describe( 'Router styles management', () => {
 				createStyleElement( 'style2' ),
 			];
 			const promises = updateStylesWithSCS( X, Y, parent );
+			const { childNodes } = parent;
 
 			expect( promises.length ).toBe( 3 );
-			expect( parent.childNodes.length ).toBe( 3 );
+			expect( childNodes.length ).toBe( 3 );
 
 			// Verify elements are in the correct order.
-			expect( parent.childNodes[ 0 ] ).toBe( Y[ 0 ] );
-			expect( parent.childNodes[ 1 ] ).toBe( Y[ 1 ] );
-			expect( parent.childNodes[ 2 ] ).toBe( Y[ 2 ] );
+			expect( childNodes[ 0 ] ).toBe( Y[ 0 ] );
+			expect( childNodes[ 1 ] ).toBe( Y[ 1 ] );
+			expect( childNodes[ 2 ] ).toBe( Y[ 2 ] );
+
+			// Verify the correct media attribute is set.
+			expect( childNodes[ 0 ] ).toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 1 ] ).toHaveAttribute( 'media', 'preload' );
+			expect( childNodes[ 2 ] ).toHaveAttribute( 'media', 'preload' );
 		} );
 
 		it( 'should handle when both X and Y are empty', () => {
