@@ -158,10 +158,10 @@ const prepareStylePromise = (
 		return stylePromiseCache.get( element );
 	}
 
-	// When the `sheet` property is different from null, that means the
-	// element exists in the DOM and the style sheet has been loaded.
+	// When the element exists in the main document and its media attribute
+	// is not "preload", that means the element comes from the initial page.
 	// The `media` attribute doesn't need to be handled in this case.
-	if ( element.sheet ) {
+	if ( window.document.contains( element ) && element.media !== 'preload' ) {
 		const promise = Promise.resolve( element );
 		stylePromiseCache.set( element, promise );
 		return promise;
