@@ -285,4 +285,29 @@ test.describe( 'Router styles', () => {
 		await expect( red ).toHaveCSS( 'color', COLOR_RED );
 		await expect( redBlock ).toBeVisible();
 	} );
+
+	test( 'should not apply preloaded styles in current page', async ( {
+		page,
+	} ) => {
+		const red = page.getByTestId( 'red-from-inline' );
+		const green = page.getByTestId( 'green-from-inline' );
+		const blue = page.getByTestId( 'blue-from-inline' );
+		const all = page.getByTestId( 'all-from-inline' );
+		const prefetching = page.getByTestId( 'prefetching' );
+
+		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( all ).toHaveCSS( 'color', COLOR_WRAPPER );
+
+		await page.getByTestId( 'link red' ).hover();
+
+		// Wait until the prefetching has finished.
+		await expect( prefetching ).toHaveText( 'false' );
+
+		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( all ).toHaveCSS( 'color', COLOR_WRAPPER );
+	} );
 } );

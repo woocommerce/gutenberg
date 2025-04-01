@@ -85,4 +85,9 @@ $wrapper_attributes = get_block_wrapper_attributes();
 	>
 		Client-side navigation
 	</div>
+
+	<!-- Text to check whether a page is being prefetched. -->
+	<div data-wp-interactive="test/router-styles" >
+		Prefetching: <span data-testid="prefetching" data-wp-text="state.prefetching"></span>
+	</div>
 </div>
