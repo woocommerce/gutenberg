@@ -310,4 +310,58 @@ test.describe( 'Router styles', () => {
 		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( all ).toHaveCSS( 'color', COLOR_WRAPPER );
 	} );
+
+	test( 'should not cause race conditions during render', async ( {
+		page,
+	} ) => {
+		// Setup a route handler to hold requests to the red stylesheet
+		// until manually resolved.
+		let resolveStyle: ( value?: unknown ) => void;
+		const linkPattern = '**/router-styles-red/style-from-link.css*';
+		await page.route( linkPattern, async ( route ) => {
+			await new Promise( ( resolve ) => ( resolveStyle = resolve ) );
+			await route.continue();
+		} );
+
+		const csn = page.getByTestId( 'client-side navigation' );
+		const red = page.getByTestId( 'red-from-inline' );
+		const green = page.getByTestId( 'green-from-inline' );
+		const blue = page.getByTestId( 'blue-from-inline' );
+		const all = page.getByTestId( 'all-from-inline' );
+		const prefetching = page.getByTestId( 'prefetching' );
+
+		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( all ).toHaveCSS( 'color', COLOR_WRAPPER );
+
+		await page.getByTestId( 'link red' ).hover();
+
+		// Wait until the prefetching has finished.
+		await expect( prefetching ).toHaveText( 'false' );
+
+		await page.getByTestId( 'link red' ).click();
+
+		// The red style is not ready yet; colors should stay the same.
+		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( all ).toHaveCSS( 'color', COLOR_WRAPPER );
+
+		await page.getByTestId( 'link green' ).click();
+
+		await expect( csn ).toBeVisible();
+		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
+		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( all ).toHaveCSS( 'color', COLOR_GREEN );
+
+		resolveStyle!();
+
+		await expect( csn ).toBeVisible();
+		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
+		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( all ).toHaveCSS( 'color', COLOR_GREEN );
+	} );
 } );
