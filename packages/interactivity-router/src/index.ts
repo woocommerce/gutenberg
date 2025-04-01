@@ -242,8 +242,11 @@ interface Store {
 		};
 	};
 	actions: {
-		navigate: ( href: string, options?: NavigateOptions ) => void;
-		prefetch: ( url: string, options?: PrefetchOptions ) => void;
+		navigate: (
+			href: string,
+			options?: NavigateOptions
+		) => Promise< void >;
+		prefetch: ( url: string, options?: PrefetchOptions ) => Promise< void >;
 	};
 }
 
@@ -377,8 +380,10 @@ export const { state, actions } = store< Store >( 'core/router', {
 		 * @param [options]       Options object.
 		 * @param [options.force] Force fetching the URL again.
 		 * @param [options.html]  HTML string to be used instead of fetching the requested URL.
+		 *
+		 * @return  Promise that resolves once the page has been fetched.
 		 */
-		prefetch( url: string, options: PrefetchOptions = {} ) {
+		*prefetch( url: string, options: PrefetchOptions = {} ) {
 			const { clientNavigationDisabled } = getConfig();
 			if ( clientNavigationDisabled ) {
 				return;
@@ -391,6 +396,8 @@ export const { state, actions } = store< Store >( 'core/router', {
 					fetchPage( pagePath, { html: options.html } )
 				);
 			}
+
+			yield pages.get( pagePath );
 		},
 	},
 } );
