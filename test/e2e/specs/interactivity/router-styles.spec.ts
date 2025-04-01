@@ -314,6 +314,8 @@ test.describe( 'Router styles', () => {
 	test( 'should not cause race conditions during render', async ( {
 		page,
 	} ) => {
+		// Resolve functions for promises that fulfill once the target
+		// style is requested and resolved respectively.
 		let requestStyle: ( value?: unknown ) => void;
 		let resolveStyle: ( value?: unknown ) => void;
 
@@ -323,7 +325,7 @@ test.describe( 'Router styles', () => {
 			( resolve ) => ( requestStyle = resolve )
 		);
 
-		// Setup a route handler to intercept styles.
+		// Setup a route handler to intercept a specific style sheet.
 		const linkPattern = '**/router-styles-red/style-from-link.css*';
 		await page.route( linkPattern, async ( route ) => {
 			requestStyle();
@@ -342,9 +344,10 @@ test.describe( 'Router styles', () => {
 		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( all ).toHaveCSS( 'color', COLOR_WRAPPER );
 
+		// Hover the red link.
 		await page.getByTestId( 'link red' ).hover();
 
-		// Wait until the style has been requested.
+		// Wait until the target style has been requested.
 		await styleHasBeenRequested;
 
 		await page.getByTestId( 'link red' ).click();
@@ -357,6 +360,7 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link green' ).click();
 
+		// Colors should change after navigation.
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
