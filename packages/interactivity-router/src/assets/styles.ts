@@ -52,8 +52,8 @@ export const normalizeMedia = ( element: StyleElement ): StyleElement => {
  * shortest common supersequence algorithm, returning a list of
  * promises for all the elements in Y.
  *
- * If X is empty, it appends all the elements in Y to the passed
- * parent element or to `document.head` instead.
+ * If X is empty, it appends all elements in Y to the passed parent
+ * element or to `document.head` instead.
  *
  * The returned promises resolve once the corresponding style element
  * is loaded and ready. Those elements that are also in X return a

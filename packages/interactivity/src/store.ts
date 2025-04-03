@@ -61,7 +61,7 @@ interface StoreOptions {
 	 * Property to block/unblock private store namespaces.
 	 *
 	 * If the passed value is `true`, it blocks the given namespace, making it
-	 * accessible only trough the returned variables of the `store()` call. In
+	 * accessible only through the returned variables of the `store()` call. In
 	 * the case a lock string is passed, it also blocks the namespace, but can
 	 * be unblocked for other `store()` calls using the same lock string.
 	 *
