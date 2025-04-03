@@ -403,7 +403,7 @@ export const { state, actions } = store< Store >( 'core/router', {
  * Announces a message to screen readers.
  *
  * This is a wrapper around the `@wordpress/a11y` package's `speak` function. It handles importing
- * the package on demand and should be used instead of calling `ally.speak` direacly.
+ * the package on demand and should be used instead of calling `ally.speak` directly.
  *
  * @param messageKey The message to be announced by assistive technologies.
  */
