@@ -259,12 +259,14 @@ export const applyStyles = ( styles: StyleElement[] ) => {
 	window.document
 		.querySelectorAll( 'style,link[rel=stylesheet]' )
 		.forEach( ( el: HTMLLinkElement | HTMLStyleElement ) => {
-			if ( styles.includes( el ) ) {
-				const { originalMedia = 'all' } = el.dataset;
-				el.sheet.media.mediaText = originalMedia;
-				el.sheet.disabled = false;
-			} else {
-				el.sheet.disabled = true;
+			if ( el.sheet ) {
+				if ( styles.includes( el ) ) {
+					const { originalMedia = 'all' } = el.dataset;
+					el.sheet.media.mediaText = originalMedia;
+					el.sheet.disabled = false;
+				} else {
+					el.sheet.disabled = true;
+				}
 			}
 		} );
 };

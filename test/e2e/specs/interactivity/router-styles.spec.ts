@@ -311,4 +311,71 @@ test.describe( 'Router styles', () => {
 		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( all ).toHaveCSS( 'color', COLOR_WRAPPER );
 	} );
+
+	test( 'should not cause race conditions during render', async ( {
+		page,
+	} ) => {
+		// Resolve functions for promises that fulfill once the target
+		// style is requested and resolved respectively.
+		let requestStyle: ( value?: unknown ) => void;
+		let resolveStyle: ( value?: unknown ) => void;
+
+		// Promise that will resolve once the target style is intercepted.
+		// See the `page.route()` below.
+		const styleHasBeenRequested = new Promise(
+			( resolve ) => ( requestStyle = resolve )
+		);
+
+		// Setup a route handler to intercept a specific style sheet.
+		const linkPattern = '**/router-styles-red/style-from-link.css*';
+		await page.route( linkPattern, async ( route ) => {
+			requestStyle();
+			await new Promise( ( resolve ) => ( resolveStyle = resolve ) );
+			await route.continue();
+		} );
+
+		const csn = page.getByTestId( 'client-side navigation' );
+		const red = page.getByTestId( 'red-from-inline' );
+		const green = page.getByTestId( 'green-from-inline' );
+		const blue = page.getByTestId( 'blue-from-inline' );
+		const all = page.getByTestId( 'all-from-inline' );
+
+		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( all ).toHaveCSS( 'color', COLOR_WRAPPER );
+
+		// Hover the red link.
+		await page.getByTestId( 'link red' ).hover();
+
+		// Wait until the target style has been requested.
+		await styleHasBeenRequested;
+
+		await page.getByTestId( 'link red' ).click();
+
+		// The red style is not ready yet; colors should stay the same.
+		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( all ).toHaveCSS( 'color', COLOR_WRAPPER );
+
+		await page.getByTestId( 'link green' ).click();
+
+		// Colors should change after navigation.
+		await expect( csn ).toBeVisible();
+		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
+		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( all ).toHaveCSS( 'color', COLOR_GREEN );
+
+		// Resolve the requested style.
+		resolveStyle!();
+
+		// Styles should not change.
+		await expect( csn ).toBeVisible();
+		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
+		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
+		await expect( all ).toHaveCSS( 'color', COLOR_GREEN );
+	} );
 } );
