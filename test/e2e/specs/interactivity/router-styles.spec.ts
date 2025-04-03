@@ -301,6 +301,7 @@ test.describe( 'Router styles', () => {
 		await expect( all ).toHaveCSS( 'color', COLOR_WRAPPER );
 
 		await page.getByTestId( 'link red' ).hover();
+		await expect( prefetching ).toHaveText( 'true' );
 
 		// Wait until the prefetching has finished.
 		await expect( prefetching ).toHaveText( 'false' );
