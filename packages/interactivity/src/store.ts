@@ -15,7 +15,7 @@ const storeConfigs = new Map();
 const serverStates = new Map();
 
 /**
- * Get the defined config for the store with the passed namespace.
+ * Gets the defined config for the store with the passed namespace.
  *
  * @param namespace Store's namespace from which to retrieve the config.
  * @return Defined config for the given namespace.
@@ -24,7 +24,7 @@ export const getConfig = ( namespace?: string ) =>
 	storeConfigs.get( namespace || getNamespace() ) || {};
 
 /**
- * Get the part of the state defined and updated from the server.
+ * Gets the part of the state defined and updated from the server.
  *
  * The object returned is read-only, and includes the state defined in PHP with
  * `wp_interactivity_state()`. When using `actions.navigate()`, this object is
