@@ -9,43 +9,42 @@ export type StyleElement = HTMLLinkElement | HTMLStyleElement;
  * Compare the passed style or link elements to check if they can be
  * considered equal.
  *
- * To make the comparison, both style elements are normalized, reverting
- * the changes made by {@link prepareStylePromise|`prepareStylePromise`}
- * to the `data-original-media` and `media` attributes if necessary.
- *
- * @example
- * The following elements would be considered equal:
- * ```html
- * <link rel="stylesheet" src="./assets/styles.css" media="all">
- * <link rel="stylesheet" src="./assets/styles.css" media="preload" data-original-media="all">
- * ```
- *
  * @param a `<style>` or `<link>` element.
  * @param b `<style>` or `<link>` element.
  * @return Whether they are considered equal.
  */
-const areStylesEqual = ( a: StyleElement, b: StyleElement ): boolean => {
-	if ( a === b ) {
-		return true;
+const areNodesEqual = ( a: StyleElement, b: StyleElement ): boolean =>
+	a.isEqualNode( b );
+
+/**
+ * Normalized the passed style or link element, reverting the changes
+ * made by {@link prepareStylePromise|`prepareStylePromise`} to the
+ * `data-original-media` and `media`.
+ *
+ * @example
+ * The following elements should be normalized to the same element:
+ * ```html
+ * <link rel="stylesheet" src="./assets/styles.css">
+ * <link rel="stylesheet" src="./assets/styles.css" media="all">
+ * <link rel="stylesheet" src="./assets/styles.css" media="preload">
+ * <link rel="stylesheet" src="./assets/styles.css" media="preload" data-original-media="all">
+ * ```
+ *
+ * @param element `<style>` or `<link>` element.
+ * @return Normalized node.
+ */
+export const normalizeMedia = ( element: StyleElement ): StyleElement => {
+	element = element.cloneNode( true ) as StyleElement;
+	const media = element.media;
+	const { originalMedia } = element.dataset;
+
+	if ( media === 'preload' ) {
+		element.media = originalMedia || 'all';
+		element.removeAttribute( 'data-original-media' );
+	} else if ( ! element.media ) {
+		element.media = 'all';
 	}
-
-	const [ normalizedA, normalizedB ] = [ a, b ].map( ( element ) => {
-		if ( element.getAttribute( 'media' ) === 'preload' ) {
-			element = element.cloneNode( true ) as StyleElement;
-			const { originalMedia } = element.dataset;
-			if ( originalMedia ) {
-				element.setAttribute( 'media', originalMedia );
-				element.removeAttribute( 'data-original-media' );
-			} else {
-				element.removeAttribute( 'media' );
-			}
-		}
-		return element;
-	} );
-
-	const result = normalizedA.isEqualNode( normalizedB );
-
-	return result;
+	return element;
 };
 
 /**
@@ -76,12 +75,22 @@ export function updateStylesWithSCS(
 ) {
 	if ( X.length === 0 ) {
 		return Y.map( ( element ) => {
+			const promise = prepareStylePromise( element );
 			parent.appendChild( element );
-			return prepareStylePromise( element );
+			return promise;
 		} );
 	}
 
-	const scs = shortestCommonSupersequence( X, Y, areStylesEqual );
+	// Create normalized arrays for comparison.
+	const xNormalized = X.map( normalizeMedia );
+	const yNormalized = Y.map( normalizeMedia );
+
+	// The `scs` array contains normalized elements.
+	const scs = shortestCommonSupersequence(
+		xNormalized,
+		yNormalized,
+		areNodesEqual
+	);
 	const xLength = X.length;
 	const yLength = Y.length;
 	const promises = [];
@@ -90,10 +99,14 @@ export function updateStylesWithSCS(
 	let yIndex = 0;
 
 	for ( const scsElement of scs ) {
+		// Actual elements that will end up in the DOM.
 		const xElement = X[ xIndex ];
 		const yElement = Y[ yIndex ];
-		if ( xIndex < xLength && areStylesEqual( xElement, scsElement ) ) {
-			if ( yIndex < yLength && areStylesEqual( yElement, scsElement ) ) {
+		// Normalized elements for comparison.
+		const xNormEl = xNormalized[ xIndex ];
+		const yNormEl = yNormalized[ yIndex ];
+		if ( xIndex < xLength && areNodesEqual( xNormEl, scsElement ) ) {
+			if ( yIndex < yLength && areNodesEqual( yNormEl, scsElement ) ) {
 				promises.push( prepareStylePromise( xElement ) );
 				yIndex++;
 			}
@@ -145,13 +158,16 @@ const prepareStylePromise = (
 		return stylePromiseCache.get( element );
 	}
 
-	if ( element.sheet ) {
+	// When the element exists in the main document and its media attribute
+	// is not "preload", that means the element comes from the initial page.
+	// The `media` attribute doesn't need to be handled in this case.
+	if ( window.document.contains( element ) && element.media !== 'preload' ) {
 		const promise = Promise.resolve( element );
 		stylePromiseCache.set( element, promise );
 		return promise;
 	}
 
-	if ( element.media ) {
+	if ( element.hasAttribute( 'media' ) && element.media !== 'all' ) {
 		element.dataset.originalMedia = element.media;
 	}
 
@@ -169,7 +185,7 @@ const prepareStylePromise = (
 			const { href } = event.target as HTMLLinkElement;
 			reject(
 				Error(
-					`The style sheet with the following URL failed to load. ${ href }`
+					`The style sheet with the following URL failed to load: ${ href }`
 				)
 			);
 		} );
@@ -197,7 +213,7 @@ const styleSheetCache = new Map< string, Promise< StyleElement >[] >();
  * those present in the passed document end up in the DOM while the order
  * is respected.
  *
- * New appended style elements contain a `media=prefetch` attribute to
+ * New appended style elements contain a `media=preload` attribute to
  * make them effectively disabled until they are applied with the
  * {@link applyStyles|`applyStyles`} function.
  *
@@ -207,7 +223,7 @@ const styleSheetCache = new Map< string, Promise< StyleElement >[] >();
  */
 export const prepareStyles = (
 	doc: Document,
-	url: string = ( doc.location || window.location ).href
+	url: string
 ): Promise< StyleElement >[] => {
 	if ( ! styleSheetCache.has( url ) ) {
 		const currentStyleElements = Array.from(
@@ -243,12 +259,14 @@ export const applyStyles = ( styles: StyleElement[] ) => {
 	window.document
 		.querySelectorAll( 'style,link[rel=stylesheet]' )
 		.forEach( ( el: HTMLLinkElement | HTMLStyleElement ) => {
-			if ( styles.includes( el ) ) {
-				const { originalMedia = 'all' } = el.dataset;
-				el.sheet.media.mediaText = originalMedia;
-				el.sheet.disabled = false;
-			} else {
-				el.sheet.disabled = true;
+			if ( el.sheet ) {
+				if ( styles.includes( el ) ) {
+					const { originalMedia = 'all' } = el.dataset;
+					el.sheet.media.mediaText = originalMedia;
+					el.sheet.disabled = false;
+				} else {
+					el.sheet.disabled = true;
+				}
 			}
 		} );
 };

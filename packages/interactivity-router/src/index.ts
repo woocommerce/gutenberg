@@ -30,7 +30,7 @@ const {
 const regionAttr = `data-${ directivePrefix }-router-region`;
 const interactiveAttr = `data-${ directivePrefix }-interactive`;
 
-interface NavigateOptions {
+export interface NavigateOptions {
 	force?: boolean;
 	html?: string;
 	replace?: boolean;
@@ -39,7 +39,7 @@ interface NavigateOptions {
 	screenReaderAnnouncement?: boolean;
 }
 
-interface PrefetchOptions {
+export interface PrefetchOptions {
 	force?: boolean;
 	html?: string;
 }
@@ -52,13 +52,13 @@ interface VdomParams {
 interface Page {
 	url: string;
 	regions: Record< string, any >;
-	styles: Promise< StyleElement >[];
-	scriptModules: Promise< ModuleLoad >[];
+	styles: StyleElement[];
+	scriptModules: ModuleLoad[];
 	title: string;
 	initialData: any;
 }
 
-type RegionsToVdom = ( dom: Document, params?: VdomParams ) => Page;
+type RegionsToVdom = ( dom: Document, params?: VdomParams ) => Promise< Page >;
 
 // Check if the navigation mode is full page or region based.
 const navigationMode: 'regionBased' | 'fullPage' =
@@ -93,10 +93,8 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 
 // Return an object with VDOM trees of those HTML regions marked with a
 // `router-region` directive.
-const regionsToVdom: RegionsToVdom = ( dom, { vdom, url } = {} ) => {
+const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
 	const regions = { body: undefined };
-	const styles = prepareStyles( dom, url );
-	const scriptModules = preloadModules( dom );
 
 	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
 		if ( navigationMode === 'fullPage' ) {
@@ -118,21 +116,19 @@ const regionsToVdom: RegionsToVdom = ( dom, { vdom, url } = {} ) => {
 	const title = dom.querySelector( 'title' )?.innerText;
 	const initialData = parseServerData( dom );
 
-	return { url, regions, styles, scriptModules, title, initialData };
+	// Wait for styles and modules to be ready.
+	const [ styles, scriptModules ] = await Promise.all( [
+		Promise.all( prepareStyles( dom, url ) ),
+		Promise.all( preloadModules( dom ) ),
+	] );
+
+	return { regions, styles, scriptModules, title, initialData, url };
 };
 
 // Render all interactive regions contained in the given page.
-const renderRegions = async ( page: Page ) => {
-	// Wait for styles and modules to be ready.
-	await Promise.all( [ ...page.styles, ...page.scriptModules ] );
-
-	// Import modules
-	const modules = await Promise.all( page.scriptModules );
-	await importModules( modules );
-
-	// Replace style sheets.
-	const styles = await Promise.all( page.styles );
-	applyStyles( styles );
+const renderRegions = ( page: Page ) => {
+	applyStyles( page.styles );
+	importModules( page.scriptModules );
 
 	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
 		if ( navigationMode === 'fullPage' ) {
@@ -184,7 +180,7 @@ window.addEventListener( 'popstate', async () => {
 	const pagePath = getPagePath( window.location.href ); // Remove hash.
 	const page = pages.has( pagePath ) && ( await pages.get( pagePath ) );
 	if ( page ) {
-		await renderRegions( page );
+		renderRegions( page );
 		// Update the URL in the state.
 		state.url = window.location.href;
 	} else {
@@ -203,7 +199,7 @@ pages.set(
 	Promise.resolve(
 		regionsToVdom( document, {
 			vdom: initialVdom,
-			url: window.location.href,
+			url: getPagePath( window.location.href ),
 		} )
 	)
 );
@@ -248,8 +244,11 @@ interface Store {
 		};
 	};
 	actions: {
-		navigate: ( href: string, options?: NavigateOptions ) => void;
-		prefetch: ( url: string, options?: PrefetchOptions ) => void;
+		navigate: (
+			href: string,
+			options?: NavigateOptions
+		) => Promise< void >;
+		prefetch: ( url: string, options?: PrefetchOptions ) => Promise< void >;
 	};
 }
 
@@ -338,13 +337,7 @@ export const { state, actions } = store< Store >( 'core/router', {
 				! page.initialData?.config?.[ 'core/router' ]
 					?.clientNavigationDisabled
 			) {
-				try {
-					yield renderRegions( page );
-				} catch ( e ) {
-					// eslint-disable-next-line no-console
-					console.warn( e );
-					yield forcePageReload( href );
-				}
+				renderRegions( page );
 				window.history[
 					options.replace ? 'replaceState' : 'pushState'
 				]( {}, '', href );
@@ -383,8 +376,10 @@ export const { state, actions } = store< Store >( 'core/router', {
 		 * @param [options]       Options object.
 		 * @param [options.force] Force fetching the URL again.
 		 * @param [options.html]  HTML string to be used instead of fetching the requested URL.
+		 *
+		 * @return  Promise that resolves once the page has been fetched.
 		 */
-		prefetch( url: string, options: PrefetchOptions = {} ) {
+		*prefetch( url: string, options: PrefetchOptions = {} ) {
 			const { clientNavigationDisabled } = getConfig();
 			if ( clientNavigationDisabled ) {
 				return;
@@ -397,6 +392,8 @@ export const { state, actions } = store< Store >( 'core/router', {
 					fetchPage( pagePath, { html: options.html } )
 				);
 			}
+
+			yield pages.get( pagePath );
 		},
 	},
 } );
