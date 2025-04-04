@@ -26,10 +26,6 @@ export interface ModuleLoad {
 
 export const initPromise = lexer.init;
 
-const edge =
-	! ( 'userAgentData' in window.navigator ) &&
-	!! window.navigator.userAgent.match( /Edge\/\d+\.\d+/ );
-
 const skip = ( id ) =>
 	Object.keys(
 		JSON.parse(
@@ -66,7 +62,6 @@ function urlJsString( url: string ) {
 const createBlob = ( source: string, type = 'text/javascript' ) =>
 	URL.createObjectURL( new Blob( [ source ], { type } ) );
 
-let lastLoad;
 function resolveDeps( load: ModuleLoad, seen: Record< string, any > ) {
 	if ( load.b || ! seen[ load.u ] ) {
 		return;
@@ -80,8 +75,7 @@ function resolveDeps( load: ModuleLoad, seen: Record< string, any > ) {
 	const [ imports, exports ] = load.a;
 	const source = load.S;
 
-	// Edge fix: ensure sibling ordering
-	let resolvedSource = edge && lastLoad ? `import '${ lastLoad }';` : '';
+	let resolvedSource = '';
 
 	if ( ! imports.length ) {
 		resolvedSource += source;
@@ -211,7 +205,7 @@ function resolveDeps( load: ModuleLoad, seen: Record< string, any > ) {
 		resolvedSource += '\n//# sourceURL=' + load.r;
 	}
 
-	load.b = lastLoad = createBlob( resolvedSource );
+	load.b = createBlob( resolvedSource );
 	load.S = undefined; // free memory
 }
 
@@ -321,7 +315,6 @@ export async function preloadModule(
 	const load = getOrCreateLoad( url, fetchOpts, null );
 	const seen = {};
 	await loadAll( load, seen );
-	lastLoad = undefined;
 	resolveDeps( load, seen );
 	// microtask scheduling – can help ensure Blob is fully ready
 	await Promise.resolve();
