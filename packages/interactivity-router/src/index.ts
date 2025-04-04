@@ -10,7 +10,7 @@ import { preloadStyles, applyStyles, type StyleElement } from './assets/styles';
 import {
 	preloadScriptModules,
 	importScriptModules,
-	setModuleAsNativelyResolved,
+	markScriptModuleAsResolved,
 	type ScriptModuleLoad,
 } from './assets/script-modules';
 
@@ -193,7 +193,7 @@ window.addEventListener( 'popstate', async () => {
 // region based navigation as well.
 window.document
 	.querySelectorAll< HTMLScriptElement >( 'script[type=module][src]' )
-	.forEach( ( { src } ) => setModuleAsNativelyResolved( src ) );
+	.forEach( ( { src } ) => markScriptModuleAsResolved( src ) );
 pages.set(
 	getPagePath( window.location.href ),
 	Promise.resolve(

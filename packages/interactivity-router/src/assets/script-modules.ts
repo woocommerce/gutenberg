@@ -30,14 +30,14 @@ const initialImportMap = initialImportMapElement
  * IDs of modules that should be resolved by the browser rather than
  * processed internally.
  */
-const modulesResolvedNatively = new Set< string >();
+const resolvedScriptModules = new Set< string >();
 
 /**
  * Mark the specified module as natively resolved.
- * @param id Module ID.
+ * @param url Script module URL.
  */
-export const setModuleAsNativelyResolved = ( id: string ) => {
-	modulesResolvedNatively.add( id );
+export const markScriptModuleAsResolved = ( url: string ) => {
+	resolvedScriptModules.add( url );
 };
 
 /**
@@ -71,7 +71,7 @@ export const preloadScriptModules = ( doc: Document ) => {
 
 	// Resolve and fetch those not resolved natively.
 	return moduleUrls
-		.filter( ( url ) => ! modulesResolvedNatively.has( url ) )
+		.filter( ( url ) => ! resolvedScriptModules.has( url ) )
 		.map( ( url ) => preloadWithMap( url, importMap ) );
 };
 
