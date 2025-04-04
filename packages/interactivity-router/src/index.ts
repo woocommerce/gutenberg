@@ -6,7 +6,13 @@ import { store, privateApis, getConfig } from '@wordpress/interactivity';
 /**
  * Internal dependencies
  */
-import { prepareStyles, applyStyles, type StyleElement } from './assets/styles';
+import { preloadStyles, applyStyles, type StyleElement } from './assets/styles';
+import {
+	preloadScriptModules,
+	importScriptModules,
+	markScriptModuleAsResolved,
+	type ScriptModuleLoad,
+} from './assets/script-modules';
 
 const {
 	directivePrefix,
@@ -47,7 +53,7 @@ interface Page {
 	url: string;
 	regions: Record< string, any >;
 	styles: StyleElement[];
-	scriptModules: string[];
+	scriptModules: ScriptModuleLoad[];
 	title: string;
 	initialData: any;
 }
@@ -79,7 +85,7 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 			html = await res.text();
 		}
 		const dom = new window.DOMParser().parseFromString( html, 'text/html' );
-		return regionsToVdom( dom, { url } );
+		return await regionsToVdom( dom, { url } );
 	} catch ( e ) {
 		return false;
 	}
@@ -110,21 +116,10 @@ const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
 	const title = dom.querySelector( 'title' )?.innerText;
 	const initialData = parseServerData( dom );
 
-	// Get module URLs.
-	const scriptModules = [
-		...dom.querySelectorAll< HTMLScriptElement >(
-			'script[type=module][src]'
-		),
-	].map( ( s ) => s.src );
-
 	// Wait for styles and modules to be ready.
-	const [ styles ] = await Promise.all( [
-		Promise.all( prepareStyles( dom, url ) ),
-		Promise.all(
-			scriptModules.map(
-				( src ) => import( /* webpackIgnore: true */ src )
-			)
-		),
+	const [ styles, scriptModules ] = await Promise.all( [
+		Promise.all( preloadStyles( dom, url ) ),
+		Promise.all( preloadScriptModules( dom ) ),
 	] );
 
 	return { regions, styles, scriptModules, title, initialData, url };
@@ -133,6 +128,7 @@ const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
 // Render all interactive regions contained in the given page.
 const renderRegions = ( page: Page ) => {
 	applyStyles( page.styles );
+	importScriptModules( page.scriptModules );
 
 	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
 		if ( navigationMode === 'fullPage' ) {
@@ -195,6 +191,9 @@ window.addEventListener( 'popstate', async () => {
 // Initialize the router and cache the initial page using the initial vDOM.
 // Once this code is tested and more mature, the head should be updated for
 // region based navigation as well.
+window.document
+	.querySelectorAll< HTMLScriptElement >( 'script[type=module][src]' )
+	.forEach( ( { src } ) => markScriptModuleAsResolved( src ) );
 pages.set(
 	getPagePath( window.location.href ),
 	Promise.resolve(

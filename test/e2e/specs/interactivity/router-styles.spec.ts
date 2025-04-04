@@ -76,6 +76,9 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link red' ).click();
 
+		// This element disappears when a navigation starts.
+		// It should be visible again after a successful navigation.
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_RED );
 		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
@@ -84,6 +87,7 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link green' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
@@ -92,6 +96,7 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link blue' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
@@ -100,6 +105,7 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link all' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_RED );
 		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
@@ -123,6 +129,9 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link red' ).click();
 
+		// This element disappears when a navigation starts.
+		// It should be visible again after a successful navigation.
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_RED );
 		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
@@ -131,6 +140,7 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link green' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
@@ -139,6 +149,7 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link blue' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
@@ -147,6 +158,7 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link all' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_RED );
 		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
@@ -164,21 +176,27 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link red' ).click();
 
+		// This element disappears when a navigation starts.
+		// It should be visible again after a successful navigation.
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( background ).toHaveScreenshot();
 
 		await page.getByTestId( 'link green' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( background ).toHaveScreenshot();
 
 		await page.getByTestId( 'link blue' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( background ).toHaveScreenshot();
 
 		await page.getByTestId( 'link all' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( background ).toHaveScreenshot();
 	} );
@@ -199,6 +217,9 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link red' ).click();
 
+		// This element disappears when a navigation starts.
+		// It should be visible again after a successful navigation.
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_RED );
 		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
@@ -207,6 +228,7 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link green' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
@@ -215,6 +237,7 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link blue' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( green ).toHaveCSS( 'color', COLOR_WRAPPER );
@@ -223,6 +246,7 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link all' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( red ).toHaveCSS( 'color', COLOR_RED );
 		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
@@ -240,21 +264,27 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link red' ).click();
 
+		// This element disappears when a navigation starts.
+		// It should be visible again after a successful navigation.
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( orderChecker ).toHaveCSS( 'color', COLOR_GREEN );
 
 		await page.getByTestId( 'link green' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( orderChecker ).toHaveCSS( 'color', COLOR_GREEN );
 
 		await page.getByTestId( 'link blue' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( orderChecker ).toHaveCSS( 'color', COLOR_GREEN );
 
 		await page.getByTestId( 'link all' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
 		await expect( orderChecker ).toHaveCSS( 'color', COLOR_GREEN );
 	} );
@@ -361,8 +391,10 @@ test.describe( 'Router styles', () => {
 
 		await page.getByTestId( 'link green' ).click();
 
-		// Colors should change after navigation.
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
+
+		// Colors should change after navigation.
 		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
 		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );
@@ -371,8 +403,9 @@ test.describe( 'Router styles', () => {
 		// Resolve the requested style.
 		resolveStyle!();
 
-		// Styles should not change.
 		await expect( csn ).toBeVisible();
+
+		// Styles should not change.
 		await expect( red ).toHaveCSS( 'color', COLOR_WRAPPER );
 		await expect( green ).toHaveCSS( 'color', COLOR_GREEN );
 		await expect( blue ).toHaveCSS( 'color', COLOR_WRAPPER );

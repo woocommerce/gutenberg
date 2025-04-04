@@ -82,6 +82,7 @@ $wrapper_attributes = get_block_wrapper_attributes();
 		data-testid="client-side navigation"
 		data-wp-interactive="test/router-styles"
 		data-wp-bind--hidden="!state.clientSideNavigation"
+		hidden
 	>
 		Client-side navigation
 	</div>

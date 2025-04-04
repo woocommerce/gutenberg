@@ -221,7 +221,7 @@ const styleSheetCache = new Map< string, Promise< StyleElement >[] >();
  * @param url URL for the passed document.
  * @return A list of promises for each style element in the passed document.
  */
-export const prepareStyles = (
+export const preloadStyles = (
 	doc: Document,
 	url: string
 ): Promise< StyleElement >[] => {
