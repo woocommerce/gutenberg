@@ -10,7 +10,7 @@
 $module_path = './module.js';
 $module_url  = plugins_url( $module_path, __FILE__ );
 wp_register_script_module(
-	'test/router-modules-bravo',
+	'test/router-script-modules-bravo',
 	$module_url,
 	array(),
 	filemtime( $module_path )
@@ -19,7 +19,7 @@ wp_register_script_module(
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
 		'data-testid'         => 'bravo-block',
-		'data-wp-interactive' => 'test/router-modules-bravo',
+		'data-wp-interactive' => 'test/router-script-modules-bravo',
 		'data-wp-text'        => 'state.name',
 	)
 );

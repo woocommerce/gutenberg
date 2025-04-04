@@ -3,44 +3,44 @@
  */
 import { test, expect } from './fixtures';
 
-test.describe( 'Router modules', () => {
+test.describe( 'Router script modules', () => {
 	test.beforeAll( async ( { interactivityUtils: utils } ) => {
 		await utils.activatePlugins();
 		const alpha = await utils.addPostWithBlock(
-			'test/router-modules-wrapper',
+			'test/router-script-modules-wrapper',
 			{
 				alias: 'alpha',
-				innerBlocks: [ [ 'test/router-modules-alpha' ] ],
+				innerBlocks: [ [ 'test/router-script-modules-alpha' ] ],
 			}
 		);
 		const bravo = await utils.addPostWithBlock(
-			'test/router-modules-wrapper',
+			'test/router-script-modules-wrapper',
 			{
 				alias: 'bravo',
-				innerBlocks: [ [ 'test/router-modules-bravo' ] ],
+				innerBlocks: [ [ 'test/router-script-modules-bravo' ] ],
 			}
 		);
 		const charlie = await utils.addPostWithBlock(
-			'test/router-modules-wrapper',
+			'test/router-script-modules-wrapper',
 			{
 				alias: 'charlie',
-				innerBlocks: [ [ 'test/router-modules-charlie' ] ],
+				innerBlocks: [ [ 'test/router-script-modules-charlie' ] ],
 			}
 		);
 
 		const all = await utils.addPostWithBlock(
-			'test/router-modules-wrapper',
+			'test/router-script-modules-wrapper',
 			{
 				alias: 'all',
 				innerBlocks: [
-					[ 'test/router-modules-alpha' ],
-					[ 'test/router-modules-bravo' ],
-					[ 'test/router-modules-charlie' ],
+					[ 'test/router-script-modules-alpha' ],
+					[ 'test/router-script-modules-bravo' ],
+					[ 'test/router-script-modules-charlie' ],
 				],
 			}
 		);
 
-		await utils.addPostWithBlock( 'test/router-modules-wrapper', {
+		await utils.addPostWithBlock( 'test/router-script-modules-wrapper', {
 			alias: 'none',
 			attributes: { links: { alpha, bravo, charlie, all } },
 		} );

@@ -1,6 +1,6 @@
 <?php return array(
 	'dependencies' => array(
 		'@wordpress/interactivity',
-		'test/router-modules-alpha',
+		'test/router-script-modules-bravo',
 	),
 );

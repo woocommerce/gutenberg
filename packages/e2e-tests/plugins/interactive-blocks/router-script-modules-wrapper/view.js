@@ -3,7 +3,7 @@
  */
 import { store, getElement } from '@wordpress/interactivity';
 
-const { state } = store( 'test/router-modules', {
+const { state } = store( 'test/router-script-modules', {
 	state: {
 		clientSideNavigation: false,
 		names: [],

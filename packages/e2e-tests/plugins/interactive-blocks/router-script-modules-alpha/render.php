@@ -10,7 +10,7 @@
 $module_path = './module.js';
 $module_url  = plugins_url( $module_path, __FILE__ );
 wp_register_script_module(
-	'test/router-modules-charlie',
+	'test/router-script-modules-alpha',
 	$module_url,
 	array(),
 	filemtime( $module_path )
@@ -18,8 +18,8 @@ wp_register_script_module(
 
 $wrapper_attributes = get_block_wrapper_attributes(
 	array(
-		'data-testid'         => 'charlie-block',
-		'data-wp-interactive' => 'test/router-modules-charlie',
+		'data-testid'         => 'alpha-block',
+		'data-wp-interactive' => 'test/router-script-modules-alpha',
 		'data-wp-text'        => 'state.name',
 	)
 );

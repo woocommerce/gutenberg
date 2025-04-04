@@ -14,7 +14,7 @@ $wrapper_attributes = get_block_wrapper_attributes();
 	<p data-testid="names" data-wp-text="state.names"></p>
 
 	<!-- Links to pages with different blocks combination. -->
-	<nav data-wp-interactive="test/router-modules">
+	<nav data-wp-interactive="test/router-script-modules">
 		<?php foreach ( $attributes['links'] as $label => $link ) : ?>
 			<a
 				data-testid="link <?php echo $label; ?>"
@@ -29,8 +29,8 @@ $wrapper_attributes = get_block_wrapper_attributes();
 
 	<!-- HTML updated on navigation. -->
 	<div
-		data-wp-interactive="test/router-modules"
-		data-wp-router-region="router-modules"
+		data-wp-interactive="test/router-script-modules"
+		data-wp-router-region="router-script-modules"
 	>
 		<?php echo $content; ?>
 	</div>
@@ -38,7 +38,7 @@ $wrapper_attributes = get_block_wrapper_attributes();
 	<!-- Text to check whether a navigation was client-side. -->
 	<div
 		data-testid="client-side navigation"
-		data-wp-interactive="test/router-modules"
+		data-wp-interactive="test/router-script-modules"
 		data-wp-bind--hidden="!state.clientSideNavigation"
 	>
 		Client-side navigation
