@@ -19,7 +19,6 @@ export interface ModuleLoad {
 	d?: ModuleLoad[]; // deps
 	b?: string; // blobUrl
 	s?: string; // shellUrl for circular references
-	m?: { url: string; resolve?: undefined }; // meta
 }
 
 export const initPromise = lexer.init;
@@ -153,10 +152,7 @@ function resolveDeps( load: ModuleLoad, seen: Record< string, any > ) {
 			}
 			// import.meta
 			else if ( dynamicImportIndex === -2 ) {
-				load.m = { url: load.r };
-				pushStringTo( start );
-				resolvedSource += `importShim._r[${ urlJsString( load.u ) }].m`;
-				lastIndex = statementEnd;
+				throw Error( 'The import.meta property is not supported.' );
 			}
 			// dynamic import
 			else {
@@ -222,7 +218,6 @@ function getOrCreateLoad(
 		d: undefined,
 		b: undefined,
 		s: undefined,
-		m: null,
 	};
 
 	if ( registry[ url ] ) {

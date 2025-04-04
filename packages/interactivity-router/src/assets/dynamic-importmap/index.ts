@@ -2,7 +2,7 @@
  * Internal dependencies
  */
 import { addImportMap, resolve } from './resolver';
-import { initPromise, registry, topLevelLoad, preloadModule } from './loader';
+import { initPromise, topLevelLoad, preloadModule } from './loader';
 
 type ImportMap = {
 	imports?: Record< string, string >;
@@ -14,11 +14,6 @@ type ImportMap = {
 // and `preloadWithMap`.
 const baseUrl = document.baseURI;
 const pageBaseUrl = baseUrl;
-
-// Global property used on `import.meta` cases.
-// TODO: not sure if we need to support that case for now.
-( self as any ).importShim = importShim;
-importShim._r = registry;
 
 async function importShim< Module = unknown >( id: string ) {
 	await initPromise;
