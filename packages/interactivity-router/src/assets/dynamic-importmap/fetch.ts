@@ -39,5 +39,5 @@ export async function fetchModule(
 			`Bad Content-Type "${ contentType }"${ fetching( url, parent ) }.`
 		);
 	}
-	return { r: res.url, s: await res.text(), t: 'js' };
+	return { r: res.url, s: await res.text() };
 }
