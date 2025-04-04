@@ -19,8 +19,6 @@ export interface ModuleLoad {
 	d?: ModuleLoad[]; // deps
 	b?: string; // blobUrl
 	s?: string; // shellUrl for circular references
-	n?: boolean; // needsShim
-	t?: string; // type (unused)
 	m?: { url: string; resolve?: undefined }; // meta
 }
 
@@ -35,11 +33,6 @@ const skip = ( id ) =>
 		).imports
 	).includes( id );
 
-const supports = window.HTMLScriptElement.supports;
-const supportsImportMaps =
-	supports && supports.name === 'supports' && supports( 'importmap' );
-const importMapSrcOrLazy = false;
-
 const fetchCache = {};
 export const registry = {};
 
@@ -50,9 +43,6 @@ async function loadAll( load: ModuleLoad, seen: Record< string, any > ) {
 	seen[ load.u ] = 1;
 	await load.L;
 	await Promise.all( load.d.map( ( dep ) => loadAll( dep, seen ) ) );
-	if ( ! load.n ) {
-		load.n = load.d.some( ( dep ) => dep.n );
-	}
 }
 
 function urlJsString( url: string ) {
@@ -232,8 +222,6 @@ function getOrCreateLoad(
 		d: undefined,
 		b: undefined,
 		s: undefined,
-		n: false,
-		t: null,
 		m: null,
 	};
 
@@ -270,10 +258,7 @@ function getOrCreateLoad(
 					if ( d !== -1 || ! n ) {
 						return undefined;
 					}
-					const { r, b } = await resolve( n, load.r || load.u );
-					if ( b && ( ! supportsImportMaps || importMapSrcOrLazy ) ) {
-						load.n = true;
-					}
+					const { r } = await resolve( n, load.r || load.u );
 					if ( d !== -1 ) {
 						return undefined;
 					}
