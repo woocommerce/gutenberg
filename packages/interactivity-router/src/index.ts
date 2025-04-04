@@ -6,7 +6,7 @@ import { store, privateApis, getConfig } from '@wordpress/interactivity';
 /**
  * Internal dependencies
  */
-import { prepareStyles, applyStyles, type StyleElement } from './assets/styles';
+import { preloadStyles, applyStyles, type StyleElement } from './assets/styles';
 import {
 	preloadModules,
 	importModules,
@@ -118,7 +118,7 @@ const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
 
 	// Wait for styles and modules to be ready.
 	const [ styles, scriptModules ] = await Promise.all( [
-		Promise.all( prepareStyles( dom, url ) ),
+		Promise.all( preloadStyles( dom, url ) ),
 		Promise.all( preloadModules( dom ) ),
 	] );
 
