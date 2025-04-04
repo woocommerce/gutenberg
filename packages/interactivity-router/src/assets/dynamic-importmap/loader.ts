@@ -24,7 +24,7 @@ export interface ModuleLoad {
 	m?: { url: string; resolve?: undefined }; // meta
 }
 
-export const initPromise = Promise.resolve( lexer.init );
+export const initPromise = lexer.init;
 
 const edge =
 	! ( 'userAgentData' in window.navigator ) &&
