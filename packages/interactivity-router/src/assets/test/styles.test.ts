@@ -4,7 +4,7 @@
 import {
 	normalizeMedia,
 	updateStylesWithSCS,
-	prepareStyles,
+	preloadStyles,
 	applyStyles,
 	type StyleElement,
 } from '../styles';
@@ -512,8 +512,8 @@ describe( 'Router styles management', () => {
 		} );
 	} );
 
-	// Tests for prepareStyles function.
-	describe( 'prepareStyles', () => {
+	// Tests for preloadStyles function.
+	describe( 'preloadStyles', () => {
 		it( 'should use cached promises for the same URL', () => {
 			// Create a test document.
 			const doc = document.implementation.createHTMLDocument();
@@ -521,14 +521,14 @@ describe( 'Router styles management', () => {
 			doc.head.appendChild( style );
 
 			// First call should update the DOM.
-			const firstResult = prepareStyles(
+			const firstResult = preloadStyles(
 				doc,
 				'https://example.com/test'
 			);
 			expect( firstResult ).toBeTruthy();
 
 			// Second call should return the same promises.
-			const secondResult = prepareStyles(
+			const secondResult = preloadStyles(
 				doc,
 				'https://example.com/test'
 			);
@@ -546,7 +546,7 @@ describe( 'Router styles management', () => {
 			doc.head.appendChild( style1 );
 			doc.head.appendChild( style2 );
 
-			prepareStyles( doc, 'https://example.com/another-test-page' );
+			preloadStyles( doc, 'https://example.com/another-test-page' );
 
 			// Check that styles were extracted and added to the document.
 			const addedStyle1 = document.querySelector( '#test-style-1' );
