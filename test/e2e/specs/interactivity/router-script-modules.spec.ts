@@ -70,28 +70,38 @@ test.describe( 'Router script modules', () => {
 
 		await page.getByTestId( 'link alpha' ).click();
 
+		// This element disappears when a navigation starts.
+		// It should be visible again after a successful navigation.
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
+
 		await expect( alpha ).toBeVisible();
 		await expect( bravo ).toBeHidden();
 		await expect( charlie ).toBeHidden();
 
 		await page.getByTestId( 'link bravo' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
+
 		await expect( alpha ).toBeHidden();
 		await expect( bravo ).toBeVisible();
 		await expect( charlie ).toBeHidden();
 
 		await page.getByTestId( 'link charlie' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
+
 		await expect( alpha ).toBeHidden();
 		await expect( bravo ).toBeHidden();
 		await expect( charlie ).toBeVisible();
 
 		await page.getByTestId( 'link all' ).click();
 
+		await expect( csn ).toBeHidden();
 		await expect( csn ).toBeVisible();
+
 		await expect( alpha ).toBeVisible();
 		await expect( bravo ).toBeVisible();
 		await expect( charlie ).toBeVisible();

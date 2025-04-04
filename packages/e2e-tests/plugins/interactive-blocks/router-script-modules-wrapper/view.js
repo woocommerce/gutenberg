@@ -11,6 +11,7 @@ const { state } = store( 'test/router-script-modules', {
 	actions: {
 		*navigate( e ) {
 			e.preventDefault();
+			state.clientSideNavigation = false;
 			const { actions } = yield import(
 				'@wordpress/interactivity-router'
 			);
