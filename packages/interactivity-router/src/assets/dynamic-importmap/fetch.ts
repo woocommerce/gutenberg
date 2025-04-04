@@ -3,36 +3,14 @@
  */
 import { type ModuleLoad } from './loader';
 
-async function doFetch( url: string, fetchOpts: RequestInit, parent: string ) {
-	let res: Response;
-
-	try {
-		res = await fetch( url, fetchOpts );
-	} catch ( e ) {
-		e.message =
-			`Unable to fetch ${ url }${ fromParent(
-				parent
-			) } - see network log for details.\n` + e.message;
-		throw e;
-	}
-	if ( ! res?.ok ) {
-		throw Error(
-			`${ res.status } ${ res.statusText } ${ res.url }${ fromParent(
-				parent
-			) }`
-		);
-	}
-	return res;
-}
-
-function fromParent( parent ) {
-	return parent ? ` imported from ${ parent }` : '';
-}
+const fetching = ( url: string, parent?: string ) => {
+	return ` fetching ${ url }${ parent ? ` from ${ parent }` : '' }`;
+};
 
 const jsContentType = /^(text|application)\/(x-)?javascript(;|$)/;
 
 /**
- * Fetch the passed module URL and return the corresponding `ModuleLoad`
+ * Fetches the passed module URL and return the corresponding `ModuleLoad`
  * instance. If the passed URL does not point to a JS file, the function
  * throws and error.
  *
@@ -46,14 +24,20 @@ export async function fetchModule(
 	fetchOpts: RequestInit,
 	parent: string
 ): Promise< ModuleLoad > {
-	const res = await doFetch( url, fetchOpts, parent );
-	const contentType = res.headers.get( 'content-type' );
-	if ( jsContentType.test( contentType ) ) {
-		return { r: res.url, s: await res.text(), t: 'js' };
+	let res: Response;
+	try {
+		res = await fetch( url, fetchOpts );
+	} catch ( e ) {
+		throw Error( `Network error${ fetching( url, parent ) }.` );
 	}
-	throw Error(
-		`Unsupported Content-Type "${ contentType }" loading ${ url }${ fromParent(
-			parent
-		) }. Modules must be served with a valid MIME type like application/javascript.`
-	);
+	if ( ! res.ok ) {
+		throw Error( `Error ${ res.status }${ fetching( url, parent ) }.` );
+	}
+	const contentType = res.headers.get( 'content-type' );
+	if ( ! jsContentType.test( contentType ) ) {
+		throw Error(
+			`Bad Content-Type "${ contentType }"${ fetching( url, parent ) }.`
+		);
+	}
+	return { r: res.url, s: await res.text(), t: 'js' };
 }
