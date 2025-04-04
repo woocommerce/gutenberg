@@ -45,9 +45,9 @@ export const setModuleAsNativelyResolved = ( id: string ) => {
  * document's import map to resolve them.
  *
  * @param doc Document containing the modules to preload.
- * @return Array of promises that resolve to a `ModuleLoad` instance.
+ * @return Array of promises that resolve to a `ScriptModuleLoad` instance.
  */
-export const preloadModules = ( doc: Document ) => {
+export const preloadScriptModules = ( doc: Document ) => {
 	// Extract the import map from the document.
 	const importMapElement = doc.querySelector< HTMLScriptElement >(
 		'script#wp-importmap[type=importmap]'
@@ -76,10 +76,12 @@ export const preloadModules = ( doc: Document ) => {
 };
 
 /**
- * Import modules respresented by the passed `ModuleLoad` instances.
+ * Import modules respresented by the passed `ScriptModuleLoad` instances.
  *
  * @param modules Array of `MoudleLoad` instances.
  * @return Promise that resolves once all modules are imported.
  */
-export const importModules = ( modules: ModuleLoad[] ) =>
+export const importScriptModules = ( modules: ScriptModuleLoad[] ) =>
 	Promise.all( modules.map( ( m ) => importPreloadedModule( m ) ) );
+
+export type ScriptModuleLoad = ModuleLoad;

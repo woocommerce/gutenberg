@@ -8,11 +8,11 @@ import { store, privateApis, getConfig } from '@wordpress/interactivity';
  */
 import { preloadStyles, applyStyles, type StyleElement } from './assets/styles';
 import {
-	preloadModules,
-	importModules,
+	preloadScriptModules,
+	importScriptModules,
 	setModuleAsNativelyResolved,
-} from './assets/scripts';
-import { type ModuleLoad } from './assets/dynamic-importmap';
+	type ScriptModuleLoad,
+} from './assets/script-modules';
 
 const {
 	directivePrefix,
@@ -53,7 +53,7 @@ interface Page {
 	url: string;
 	regions: Record< string, any >;
 	styles: StyleElement[];
-	scriptModules: ModuleLoad[];
+	scriptModules: ScriptModuleLoad[];
 	title: string;
 	initialData: any;
 }
@@ -119,7 +119,7 @@ const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
 	// Wait for styles and modules to be ready.
 	const [ styles, scriptModules ] = await Promise.all( [
 		Promise.all( preloadStyles( dom, url ) ),
-		Promise.all( preloadModules( dom ) ),
+		Promise.all( preloadScriptModules( dom ) ),
 	] );
 
 	return { regions, styles, scriptModules, title, initialData, url };
@@ -128,7 +128,7 @@ const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
 // Render all interactive regions contained in the given page.
 const renderRegions = ( page: Page ) => {
 	applyStyles( page.styles );
-	importModules( page.scriptModules );
+	importScriptModules( page.scriptModules );
 
 	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
 		if ( navigationMode === 'fullPage' ) {
