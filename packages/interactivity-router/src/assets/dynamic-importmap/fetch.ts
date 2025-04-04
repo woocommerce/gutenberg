@@ -3,27 +3,7 @@
  */
 import { type ModuleLoad } from './loader';
 
-// restrict in-flight fetches to a pool of 100
-const p = [];
-let c = 0;
-function pushFetchPool() {
-	if ( ++c > 100 ) {
-		return new Promise( ( r ) => p.push( r ) );
-	}
-	return undefined;
-}
-function popFetchPool() {
-	c--;
-	if ( p.length ) {
-		p.shift()();
-	}
-}
-
 async function doFetch( url: string, fetchOpts: RequestInit, parent: string ) {
-	const poolQueue = pushFetchPool();
-	if ( poolQueue ) {
-		await poolQueue;
-	}
 	let res: Response;
 
 	try {
@@ -34,8 +14,6 @@ async function doFetch( url: string, fetchOpts: RequestInit, parent: string ) {
 				parent
 			) } - see network log for details.\n` + e.message;
 		throw e;
-	} finally {
-		popFetchPool();
 	}
 	if ( ! res?.ok ) {
 		throw Error(
