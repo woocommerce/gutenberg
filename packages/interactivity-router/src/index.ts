@@ -85,7 +85,7 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 			html = await res.text();
 		}
 		const dom = new window.DOMParser().parseFromString( html, 'text/html' );
-		return regionsToVdom( dom, { url } );
+		return await regionsToVdom( dom, { url } );
 	} catch ( e ) {
 		return false;
 	}
