@@ -23,6 +23,7 @@ const {
 	parseServerData,
 	populateServerData,
 	batch,
+	initDone,
 } = privateApis(
 	'I acknowledge that using private APIs means my theme or plugin will inevitably break in the next version of WordPress.'
 );
@@ -188,21 +189,24 @@ window.addEventListener( 'popstate', async () => {
 	}
 } );
 
-// Initialize the router and cache the initial page using the initial vDOM.
-// Once this code is tested and more mature, the head should be updated for
-// region based navigation as well.
-window.document
-	.querySelectorAll< HTMLScriptElement >( 'script[type=module][src]' )
-	.forEach( ( { src } ) => markScriptModuleAsResolved( src ) );
-pages.set(
-	getPagePath( window.location.href ),
-	Promise.resolve(
-		regionsToVdom( document, {
-			vdom: initialVdom,
-			url: getPagePath( window.location.href ),
-		} )
-	)
-);
+( async () => {
+	await initDone;
+	// Initialize the router and cache the initial page using the initial vDOM.
+	// Once this code is tested and more mature, the head should be updated for
+	// region based navigation as well.
+	window.document
+		.querySelectorAll< HTMLScriptElement >( 'script[type=module][src]' )
+		.forEach( ( { src } ) => markScriptModuleAsResolved( src ) );
+	pages.set(
+		getPagePath( window.location.href ),
+		Promise.resolve(
+			regionsToVdom( document, {
+				vdom: initialVdom,
+				url: getPagePath( window.location.href ),
+			} )
+		)
+	);
+} )();
 
 // Check if the link is valid for client-side navigation.
 const isValidLink = ( ref: HTMLAnchorElement ) =>
