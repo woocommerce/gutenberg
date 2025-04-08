@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 2.21.0 (2025-03-27)
+
+## 2.20.0 (2025-03-13)
+
+## 2.19.0 (2025-02-28)
+
 ### Bug Fixes
 
 -   Revert "Handle styles assets on region-based navigation". ([#69222](https://github.com/WordPress/gutenberg/pull/69222))

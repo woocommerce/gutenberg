@@ -53,7 +53,9 @@ export default function BlockThemeControl( { id } ) {
 		id
 	);
 	const { createSuccessNotice } = useDispatch( noticesStore );
-	const { setRenderingMode } = useDispatch( editorStore );
+	const { setRenderingMode, setDefaultRenderingMode } = unlock(
+		useDispatch( editorStore )
+	);
 
 	const canCreateTemplate = useSelect(
 		( select ) =>
@@ -139,9 +141,7 @@ export default function BlockThemeControl( { id } ) {
 
 							<SwapTemplateButton onClick={ onClose } />
 							<ResetDefaultTemplate onClick={ onClose } />
-							{ canCreateTemplate && (
-								<CreateNewTemplate onClick={ onClose } />
-							) }
+							{ canCreateTemplate && <CreateNewTemplate /> }
 						</MenuGroup>
 						<MenuGroup>
 							<MenuItem
@@ -149,11 +149,11 @@ export default function BlockThemeControl( { id } ) {
 								isSelected={ ! isTemplateHidden }
 								role="menuitemcheckbox"
 								onClick={ () => {
-									setRenderingMode(
-										isTemplateHidden
-											? 'template-locked'
-											: 'post-only'
-									);
+									const newRenderingMode = isTemplateHidden
+										? 'template-locked'
+										: 'post-only';
+									setRenderingMode( newRenderingMode );
+									setDefaultRenderingMode( newRenderingMode );
 								} }
 							>
 								{ __( 'Show template' ) }

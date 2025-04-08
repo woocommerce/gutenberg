@@ -30,6 +30,10 @@ declare global {
 	}
 }
 
+interface SyncAwareFunction extends Function {
+	sync?: boolean;
+}
+
 /**
  * Executes a callback function after the next frame is rendered.
  *
@@ -135,19 +139,26 @@ export function withScope<
 	? Promise< Return >
 	: never;
 export function withScope< Func extends Function >( func: Func ): Func;
+export function withScope< Func extends SyncAwareFunction >( func: Func ): Func;
 export function withScope( func: ( ...args: unknown[] ) => unknown ) {
 	const scope = getScope();
 	const ns = getNamespace();
+
+	let wrapped: Function;
 	if ( func?.constructor?.name === 'GeneratorFunction' ) {
-		return async ( ...args: Parameters< typeof func > ) => {
+		wrapped = async ( ...args: Parameters< typeof func > ) => {
 			const gen = func( ...args ) as Generator;
 			let value: any;
 			let it: any;
+			let error: any;
 			while ( true ) {
 				setNamespace( ns );
 				setScope( scope );
 				try {
-					it = gen.next( value );
+					it = error ? gen.throw( error ) : gen.next( value );
+					error = undefined;
+				} catch ( e ) {
+					throw e;
 				} finally {
 					resetScope();
 					resetNamespace();
@@ -156,32 +167,41 @@ export function withScope( func: ( ...args: unknown[] ) => unknown ) {
 				try {
 					value = await it.value;
 				} catch ( e ) {
-					setNamespace( ns );
-					setScope( scope );
-					gen.throw( e );
-				} finally {
-					resetScope();
-					resetNamespace();
+					error = e;
 				}
-
 				if ( it.done ) {
-					break;
+					if ( error ) {
+						throw error;
+					} else {
+						break;
+					}
 				}
 			}
 
 			return value;
 		};
+	} else {
+		wrapped = ( ...args: Parameters< typeof func > ) => {
+			setNamespace( ns );
+			setScope( scope );
+			try {
+				return func( ...args );
+			} finally {
+				resetNamespace();
+				resetScope();
+			}
+		};
 	}
-	return ( ...args: Parameters< typeof func > ) => {
-		setNamespace( ns );
-		setScope( scope );
-		try {
-			return func( ...args );
-		} finally {
-			resetNamespace();
-			resetScope();
-		}
-	};
+
+	// If function was annotated via `withSyncEvent()`, maintain the annotation.
+	const syncAware = func as SyncAwareFunction;
+	if ( syncAware.sync ) {
+		const syncAwareWrapped = wrapped as SyncAwareFunction;
+		syncAwareWrapped.sync = true;
+		return syncAwareWrapped;
+	}
+
+	return wrapped;
 }
 
 /**
@@ -374,3 +394,15 @@ export const isPlainObject = (
 			typeof candidate === 'object' &&
 			candidate.constructor === Object
 	);
+
+/**
+ * Indicates that the passed `callback` requires synchronous access to the event object.
+ *
+ * @param callback The event callback.
+ * @return Altered event callback.
+ */
+export function withSyncEvent( callback: Function ): SyncAwareFunction {
+	const syncAware = callback as SyncAwareFunction;
+	syncAware.sync = true;
+	return syncAware;
+}
