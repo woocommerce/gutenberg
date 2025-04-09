@@ -160,7 +160,7 @@ const renderRegions = ( page: Page ) => {
 };
 
 /**
- * Load the given page forcing a full page reload.
+ * Loads the given page forcing a full page reload.
  *
  * The function returns a promise that won't resolve, useful to prevent any
  * potential feedback indicating that the navigation has finished while the new
@@ -189,8 +189,6 @@ window.addEventListener( 'popstate', async () => {
 } );
 
 // Initialize the router and cache the initial page using the initial vDOM.
-// Once this code is tested and more mature, the head should be updated for
-// region based navigation as well.
 window.document
 	.querySelectorAll< HTMLScriptElement >( 'script[type=module][src]' )
 	.forEach( ( { src } ) => markScriptModuleAsResolved( src ) );
@@ -402,7 +400,7 @@ export const { state, actions } = store< Store >( 'core/router', {
  * Announces a message to screen readers.
  *
  * This is a wrapper around the `@wordpress/a11y` package's `speak` function. It handles importing
- * the package on demand and should be used instead of calling `ally.speak` direacly.
+ * the package on demand and should be used instead of calling `a11y.speak` directly.
  *
  * @param messageKey The message to be announced by assistive technologies.
  */
