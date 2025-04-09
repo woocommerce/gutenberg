@@ -9,7 +9,7 @@
 function _gutenberg_enqueue_interactivity_router() {
 	// Set the navigation mode to full page client-side navigation.
 	wp_interactivity_config( 'core/router', array( 'navigationMode' => 'fullPage' ) );
-	wp_enqueue_script_module( '@wordpress/interactivity-router' );
+	wp_enqueue_script_module( '@wordpress/interactivity-router/full-page' );
 }
 
 add_action( 'wp_enqueue_scripts', '_gutenberg_enqueue_interactivity_router' );
