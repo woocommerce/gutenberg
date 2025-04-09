@@ -3,6 +3,7 @@
 	"compilerOptions": {
 		"composite": true
 	},
+	"files": [],
 	"references": [
 		{ "path": "../a11y" },
 		{ "path": "../interactivity" },
