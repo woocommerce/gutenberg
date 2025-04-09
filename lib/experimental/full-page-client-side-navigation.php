@@ -7,12 +7,17 @@
  * Enqueue the interactivity router script.
  */
 function _gutenberg_enqueue_interactivity_router() {
-	// Set the navigation mode to full page client-side navigation.
-	wp_interactivity_config( 'core/router', array( 'clientNavigationMode' => 'fullPage' ) );
 	wp_enqueue_script_module( '@wordpress/interactivity-router/full-page' );
 }
-
 add_action( 'wp_enqueue_scripts', '_gutenberg_enqueue_interactivity_router' );
+
+/**
+ * Sets the navigation mode to full page client-side navigation.
+ */
+function _gutenberg_interactivity_router_set_client_navigation_mode() {
+	wp_interactivity_config( 'core/router', array( 'clientNavigationMode' => 'fullPage' ) );
+}
+add_action( 'init', '_gutenberg_interactivity_router_set_client_navigation_mode', 9 );
 
 /**
  * Set enhancedPagination attribute for query loop when the experiment is enabled.
