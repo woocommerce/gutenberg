@@ -24,6 +24,10 @@
 	},
 	"main": "build/index.js",
 	"module": "build-module/index.js",
+	"exports": {
+		".": "./build-module/index.js",
+		"./full-page": "./build-module/full-page.js"
+	},
 	"react-native": "src/index",
 	"wpScriptModuleExports": {
 		".": "./build-module/index.js",
