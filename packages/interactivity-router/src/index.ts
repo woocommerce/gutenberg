@@ -29,6 +29,7 @@ const {
 
 const regionAttr = `data-${ directivePrefix }-router-region`;
 const interactiveAttr = `data-${ directivePrefix }-interactive`;
+const regionsSelector = `[${ interactiveAttr }][${ regionAttr }]:not([${ interactiveAttr }] [${ interactiveAttr }])`;
 
 export interface NavigateOptions {
 	force?: boolean;
@@ -59,10 +60,6 @@ interface Page {
 }
 
 type RegionsToVdom = ( dom: Document, params?: VdomParams ) => Promise< Page >;
-
-// Check if the navigation mode is full page or region based. The only supported
-// mode for now is 'regionBased'.
-const navigationMode: 'regionBased' = 'regionBased';
 
 // The cache of visited and prefetched pages, stylesheets and scripts.
 const pages = new Map< string, Promise< Page | false > >();
@@ -95,16 +92,14 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 // `router-region` directive.
 const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
 	const regions = { body: undefined };
-	if ( navigationMode === 'regionBased' ) {
-		dom.querySelectorAll(
-			`[${ interactiveAttr }][${ regionAttr }]:not([${ interactiveAttr }] [${ interactiveAttr }])`
-		).forEach( ( region ) => {
-			const id = region.getAttribute( regionAttr );
-			regions[ id ] = vdom?.has( region )
-				? vdom.get( region )
-				: toVdom( region );
-		} );
-	}
+
+	dom.querySelectorAll( regionsSelector ).forEach( ( region ) => {
+		const id = region.getAttribute( regionAttr );
+		regions[ id ] = vdom?.has( region )
+			? vdom.get( region )
+			: toVdom( region );
+	} );
+
 	const title = dom.querySelector( 'title' )?.innerText;
 	const initialData = parseServerData( dom );
 
@@ -122,20 +117,15 @@ const renderRegions = ( page: Page ) => {
 	applyStyles( page.styles );
 	importScriptModules( page.scriptModules );
 
-	if ( navigationMode === 'regionBased' ) {
-		batch( () => {
-			populateServerData( page.initialData );
-			document
-				.querySelectorAll(
-					`[${ interactiveAttr }][${ regionAttr }]:not([${ interactiveAttr }] [${ interactiveAttr }])`
-				)
-				.forEach( ( region ) => {
-					const id = region.getAttribute( regionAttr );
-					const fragment = getRegionRootFragment( region );
-					render( page.regions[ id ], fragment );
-				} );
+	batch( () => {
+		populateServerData( page.initialData );
+		document.querySelectorAll( regionsSelector ).forEach( ( region ) => {
+			const id = region.getAttribute( regionAttr );
+			const fragment = getRegionRootFragment( region );
+			render( page.regions[ id ], fragment );
 		} );
-	}
+	} );
+
 	if ( page.title ) {
 		document.title = page.title;
 	}

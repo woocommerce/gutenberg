@@ -25,7 +25,10 @@
 	"main": "build/index.js",
 	"module": "build-module/index.js",
 	"react-native": "src/index",
-	"wpScriptModuleExports": "./build-module/index.js",
+	"wpScriptModuleExports": {
+		".": "./build-module/index.js",
+		"./full-page": "./build-module/full-page.js"
+	},
 	"types": "build-types",
 	"dependencies": {
 		"@wordpress/a11y": "file:../a11y",
