@@ -60,9 +60,9 @@ interface Page {
 
 type RegionsToVdom = ( dom: Document, params?: VdomParams ) => Promise< Page >;
 
-// Check if the navigation mode is full page or region based.
-const navigationMode: 'regionBased' | 'fullPage' =
-	getConfig( 'core/router' ).navigationMode ?? 'regionBased';
+// Check if the navigation mode is full page or region based. The only supported
+// mode for now is 'regionBased'.
+const navigationMode: 'regionBased' = 'regionBased';
 
 // The cache of visited and prefetched pages, stylesheets and scripts.
 const pages = new Map< string, Promise< Page | false > >();
@@ -95,14 +95,6 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 // `router-region` directive.
 const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
 	const regions = { body: undefined };
-
-	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
-		if ( navigationMode === 'fullPage' ) {
-			regions.body = vdom
-				? vdom.get( document.body )
-				: toVdom( dom.body );
-		}
-	}
 	if ( navigationMode === 'regionBased' ) {
 		dom.querySelectorAll(
 			`[${ interactiveAttr }][${ regionAttr }]:not([${ interactiveAttr }] [${ interactiveAttr }])`
@@ -130,16 +122,6 @@ const renderRegions = ( page: Page ) => {
 	applyStyles( page.styles );
 	importScriptModules( page.scriptModules );
 
-	if ( globalThis.IS_GUTENBERG_PLUGIN ) {
-		if ( navigationMode === 'fullPage' ) {
-			// Update HTML.
-			const fragment = getRegionRootFragment( document.body );
-			batch( () => {
-				populateServerData( page.initialData );
-				render( page.regions.body, fragment );
-			} );
-		}
-	}
 	if ( navigationMode === 'regionBased' ) {
 		batch( () => {
 			populateServerData( page.initialData );
@@ -201,28 +183,6 @@ pages.set(
 		} )
 	)
 );
-
-// Check if the link is valid for client-side navigation.
-const isValidLink = ( ref: HTMLAnchorElement ) =>
-	ref &&
-	ref instanceof window.HTMLAnchorElement &&
-	ref.href &&
-	( ! ref.target || ref.target === '_self' ) &&
-	ref.origin === window.location.origin &&
-	! ref.pathname.startsWith( '/wp-admin' ) &&
-	! ref.pathname.startsWith( '/wp-login.php' ) &&
-	! ref.getAttribute( 'href' ).startsWith( '#' ) &&
-	! new URL( ref.href ).searchParams.has( '_wpnonce' );
-
-// Check if the event is valid for client-side navigation.
-const isValidEvent = ( event: MouseEvent ) =>
-	event &&
-	event.button === 0 && // Left clicks only.
-	! event.metaKey && // Open in new tab (Mac).
-	! event.ctrlKey && // Open in new tab (Windows).
-	! event.altKey && // Download.
-	! event.shiftKey &&
-	! event.defaultPrevented;
 
 // Variable to store the current navigation.
 let navigatingTo = '';
@@ -444,35 +404,4 @@ function a11ySpeak( messageKey: keyof typeof navigationTexts ) {
 		// Ignore failures to load the a11y module.
 		() => {}
 	);
-}
-
-// Add click and prefetch to all links.
-if ( globalThis.IS_GUTENBERG_PLUGIN ) {
-	if ( navigationMode === 'fullPage' ) {
-		// Navigate on click.
-		document.addEventListener(
-			'click',
-			function ( event ) {
-				const ref = ( event.target as Element ).closest( 'a' );
-				if ( isValidLink( ref ) && isValidEvent( event ) ) {
-					event.preventDefault();
-					actions.navigate( ref.href );
-				}
-			},
-			true
-		);
-		// Prefetch on hover.
-		document.addEventListener(
-			'mouseenter',
-			function ( event ) {
-				if ( ( event.target as Element )?.nodeName === 'A' ) {
-					const ref = ( event.target as Element ).closest( 'a' );
-					if ( isValidLink( ref ) && isValidEvent( event ) ) {
-						actions.prefetch( ref.href );
-					}
-				}
-			},
-			true
-		);
-	}
 }
