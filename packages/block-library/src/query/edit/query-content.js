@@ -38,7 +38,6 @@ export default function QueryContent( {
 	const {
 		queryId,
 		query,
-		displayLayout,
 		enhancedPagination,
 		tagName: TagName = 'div',
 		query: { inherit } = {},
@@ -86,8 +85,11 @@ export default function QueryContent( {
 	// because updates are batched after the render and changes in different query properties
 	// would cause to override previous wanted changes.
 	const updateQuery = useCallback(
-		( newQuery ) => setAttributes( { query: { ...query, ...newQuery } } ),
-		[ query, setAttributes ]
+		( newQuery ) =>
+			setAttributes( ( prevAttributes ) => ( {
+				query: { ...prevAttributes.query, ...newQuery },
+			} ) ),
+		[ setAttributes ]
 	);
 	useEffect( () => {
 		const newQuery = {};
@@ -98,21 +100,15 @@ export default function QueryContent( {
 		} else if ( ! query.perPage && postsPerPage ) {
 			newQuery.perPage = postsPerPage;
 		}
-		// We need to reset the `inherit` value if in a singular template, as queries
-		// are not inherited when in singular content (e.g. post, page, 404, blank).
-		if ( isSingular && query.inherit ) {
-			newQuery.inherit = false;
-		}
+
 		if ( !! Object.keys( newQuery ).length ) {
 			__unstableMarkNextChangeAsNotPersistent();
 			updateQuery( newQuery );
 		}
 	}, [
 		query.perPage,
-		query.inherit,
-		postsPerPage,
 		inherit,
-		isSingular,
+		postsPerPage,
 		__unstableMarkNextChangeAsNotPersistent,
 		updateQuery,
 	] );
@@ -129,10 +125,6 @@ export default function QueryContent( {
 		__unstableMarkNextChangeAsNotPersistent,
 		setAttributes,
 	] );
-	const updateDisplayLayout = ( newDisplayLayout ) =>
-		setAttributes( {
-			displayLayout: { ...displayLayout, ...newDisplayLayout },
-		} );
 
 	return (
 		<>
@@ -146,7 +138,6 @@ export default function QueryContent( {
 					name={ name }
 					attributes={ attributes }
 					setQuery={ updateQuery }
-					setDisplayLayout={ updateDisplayLayout }
 					setAttributes={ setAttributes }
 					clientId={ clientId }
 					isSingular={ isSingular }
