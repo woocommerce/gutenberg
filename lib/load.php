@@ -187,3 +187,6 @@ require_once __DIR__ . '/experimental/data-views.php';
 if ( gutenberg_is_experiment_enabled( 'gutenberg-media-processing' ) ) {
 	require_once __DIR__ . '/experimental/media/load.php';
 }
+
+// Interactivity API full page client-side navigation.
+require __DIR__ . '/interactivity-api/full-page-navigation.php';

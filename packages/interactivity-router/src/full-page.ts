@@ -4,8 +4,8 @@
 import { getConfig } from '@wordpress/interactivity';
 
 // Check if the navigation mode is full page or region based.
-const navigationMode: 'regionBased' | 'fullPage' =
-	getConfig( 'core/router' ).navigationMode ?? 'regionBased';
+const clientNavigationMode: 'regionBased' | 'experimentalFullPage' =
+	getConfig( 'core/router' ).clientNavigationMode ?? 'regionBased';
 
 // Check if the link is valid for client-side navigation.
 const isValidLink = ( ref: HTMLAnchorElement ) =>
@@ -30,7 +30,7 @@ const isValidEvent = ( event: MouseEvent ) =>
 	! event.defaultPrevented;
 
 // Add click and prefetch to all links.
-if ( navigationMode === 'fullPage' ) {
+if ( clientNavigationMode === 'experimentalFullPage' ) {
 	// Navigate on click.
 	document.addEventListener(
 		'click',
