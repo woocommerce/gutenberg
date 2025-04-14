@@ -115,7 +115,6 @@ const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
 // Render all interactive regions contained in the given page.
 const renderRegions = ( page: Page ) => {
 	applyStyles( page.styles );
-	importScriptModules( page.scriptModules );
 
 	batch( () => {
 		populateServerData( page.initialData );
@@ -285,6 +284,7 @@ export const { state, actions } = store< Store >( 'core/router', {
 				! page.initialData?.config?.[ 'core/router' ]
 					?.clientNavigationDisabled
 			) {
+				yield importScriptModules( page.scriptModules );
 				renderRegions( page );
 				window.history[
 					options.replace ? 'replaceState' : 'pushState'
