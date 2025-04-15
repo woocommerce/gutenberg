@@ -189,4 +189,5 @@ if ( gutenberg_is_experiment_enabled( 'gutenberg-media-processing' ) ) {
 }
 
 // Interactivity API full page client-side navigation.
-require __DIR__ . '/interactivity-api/full-page-navigation.php';
+require __DIR__ . '/interactivity-api/class-wp-interactivity-api-full-page-navigation.php';
+WP_Interactivity_API_Full_Page_Navigation::instance();
