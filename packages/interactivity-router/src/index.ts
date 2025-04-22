@@ -91,8 +91,7 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 // Return an object with VDOM trees of those HTML regions marked with a
 // `router-region` directive.
 const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
-	const regions = { body: undefined };
-
+	const regions = {};
 	dom.querySelectorAll( regionsSelector ).forEach( ( region ) => {
 		const id = region.getAttribute( regionAttr );
 		regions[ id ] = vdom?.has( region )
