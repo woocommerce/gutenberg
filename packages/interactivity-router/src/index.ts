@@ -53,6 +53,7 @@ interface VdomParams {
 interface Page {
 	url: string;
 	regions: Record< string, any >;
+	regionsToAttach: Record< string, string >;
 	styles: StyleElement[];
 	scriptModules: ScriptModuleLoad[];
 	title: string;
@@ -88,15 +89,35 @@ const fetchPage = async ( url: string, { html }: { html: string } ) => {
 	}
 };
 
+/**
+ * Parses the given region's directive.
+ *
+ * @param region Region element.
+ * @return Data contained in the region directive value.
+ */
+const parseRegionAttribute = ( region: Element ) => {
+	const value = region.getAttribute( regionAttr );
+	try {
+		const { id, attachTo } = JSON.parse( value );
+		return { id, attachTo };
+	} catch ( e ) {
+		return { id: value };
+	}
+};
+
 // Return an object with VDOM trees of those HTML regions marked with a
 // `router-region` directive.
 const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
 	const regions = {};
+	const regionsToAttach = {};
 	dom.querySelectorAll( regionsSelector ).forEach( ( region ) => {
-		const id = region.getAttribute( regionAttr );
+		const { id, attachTo } = parseRegionAttribute( region );
 		regions[ id ] = vdom?.has( region )
 			? vdom.get( region )
 			: toVdom( region );
+		if ( attachTo ) {
+			regionsToAttach[ id ] = attachTo;
+		}
 	} );
 
 	const title = dom.querySelector( 'title' )?.innerText;
@@ -108,20 +129,43 @@ const regionsToVdom: RegionsToVdom = async ( dom, { vdom, url } = {} ) => {
 		Promise.all( preloadScriptModules( dom ) ),
 	] );
 
-	return { regions, styles, scriptModules, title, initialData, url };
+	return {
+		regions,
+		regionsToAttach,
+		styles,
+		scriptModules,
+		title,
+		initialData,
+		url,
+	};
 };
 
 // Render all interactive regions contained in the given page.
 const renderRegions = ( page: Page ) => {
 	applyStyles( page.styles );
 
+	// Clone regionsToAttach.
+	const regionsToAttach = { ...page.regionsToAttach };
+
 	batch( () => {
 		populateServerData( page.initialData );
 		document.querySelectorAll( regionsSelector ).forEach( ( region ) => {
-			const id = region.getAttribute( regionAttr );
+			const { id } = parseRegionAttribute( region );
 			const fragment = getRegionRootFragment( region );
 			render( page.regions[ id ], fragment );
+			// If this is an attached region, remove it from the list.
+			delete regionsToAttach[ id ];
 		} );
+
+		// Render unattached regions.
+		for ( const id in regionsToAttach ) {
+			const parent = document.querySelector( regionsToAttach[ id ] );
+			const region = document.createElement( 'div' ); // TODO - use type from preact element?
+			parent.appendChild( region );
+
+			const fragment = getRegionRootFragment( region );
+			render( page.regions[ id ], fragment );
+		}
 	} );
 
 	if ( page.title ) {
