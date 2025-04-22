@@ -52,3 +52,8 @@ function gutenberg_core_image_lightbox_flush_footer_buffer() {
 	ob_end_flush();
 }
 add_action( 'wp_footer', 'gutenberg_core_image_lightbox_flush_footer_buffer', 11 );
+
+function gutenberg_iapi_router_region_based() {
+	wp_interactivity_config( 'core/router', array( 'clientNavigationMode' => 'regionBased' ) );
+}
+add_action( 'init', 'gutenberg_iapi_router_region_based' );
