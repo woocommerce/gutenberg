@@ -31,3 +31,24 @@ function gutenberg_register_interactivity_script_module_data_hooks() {
 	}
 }
 add_action( 'after_setup_theme', 'gutenberg_register_interactivity_script_module_data_hooks', 20 );
+
+function gutenberg_iapi_add_lightbox_region_directives( $buffer ) {
+	$p = new WP_HTML_Tag_Processor( $buffer );
+	if ( $p->next_tag( array( 'class_name' => 'wp-lightbox-overlay' ) ) ) {
+		$p->set_attribute( 'data-wp-router-region', '{ "id": "core/body", "attachTo": "body" }' );
+		$p->set_attribute( 'data-wp-key', 'wp-lightbox-overlay' );
+		return $p->get_updated_html();
+	} else {
+		return $buffer;
+	}
+}
+
+function gutenberg_core_image_lightbox_start_footer_buffer() {
+	ob_start( 'gutenberg_iapi_add_lightbox_region_directives' );
+}
+add_action( 'wp_footer', 'gutenberg_core_image_lightbox_start_footer_buffer', 9 );
+
+function gutenberg_core_image_lightbox_flush_footer_buffer() {
+	ob_end_flush();
+}
+add_action( 'wp_footer', 'gutenberg_core_image_lightbox_flush_footer_buffer', 11 );
