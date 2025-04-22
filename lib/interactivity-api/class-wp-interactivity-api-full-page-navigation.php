@@ -26,9 +26,8 @@ if ( ! class_exists( 'WP_Interactivity_API_Full_Page_Navigation' ) ) {
 		 * Returns whether the client navigation mode is `experimentalFullPage`.
 		 */
 		public function is_enabled() {
-			$iapi_router_config     = wp_interactivity_config( 'core/router' );
-			$client_navigation_mode = $iapi_router_config['clientNavigationMode'];
-			return 'experimentalFullPage' === $client_navigation_mode;
+			$iapi_router_config = wp_interactivity_config( 'core/router' );
+			return 'experimentalFullPage' === $iapi_router_config['clientNavigationMode'] ?? '';
 		}
 
 		/**
