@@ -15,6 +15,8 @@ if ( ! class_exists( 'WP_Interactivity_API_Full_Page_Navigation' ) ) {
 
 		private static $instance = null;
 
+		private static $unlock_message = 'I acknowledge that full-page client-side navigation is still experimental and will probably change, breaking my plugin or website on its next version.';
+
 		public function __construct() {
 			add_action( 'init', array( $this, 'set_default_mode' ), 9 );
 			add_action( 'wp_head', array( $this, 'buffer_start' ) );
@@ -26,8 +28,12 @@ if ( ! class_exists( 'WP_Interactivity_API_Full_Page_Navigation' ) ) {
 		 * Returns whether the client navigation mode is `experimentalFullPage`.
 		 */
 		public function is_enabled() {
+			$unlock_message     = apply_filters( 'wp_interactivity_experimental_full_page_client_navigation', '' );
 			$iapi_router_config = wp_interactivity_config( 'core/router' );
-			return 'experimentalFullPage' === $iapi_router_config['clientNavigationMode'] ?? '';
+			return (
+				self::$unlock_message === $unlock_message &&
+				'experimentalFullPage' === $iapi_router_config['clientNavigationMode'] ?? ''
+			);
 		}
 
 		/**
