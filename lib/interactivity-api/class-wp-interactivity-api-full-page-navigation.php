@@ -86,7 +86,7 @@ if ( ! class_exists( 'WP_Interactivity_API_Full_Page_Navigation' ) ) {
 			$p = new WP_HTML_Tag_Processor( $buffer );
 			if ( $p->next_tag( array( 'tag_name' => 'BODY' ) ) ) {
 				$p->set_attribute( 'data-wp-interactive', true );
-				$p->set_attribute( 'data-wp-router-region', 'body' );
+				$p->set_attribute( 'data-wp-router-region', 'core/body' );
 				return $p->get_updated_html();
 			} else {
 				return $buffer;
