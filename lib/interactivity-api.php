@@ -37,6 +37,7 @@ function gutenberg_iapi_add_lightbox_region_directives( $buffer ) {
 	if ( $p->next_tag( array( 'class_name' => 'wp-lightbox-overlay' ) ) ) {
 		$p->set_attribute( 'data-wp-router-region', '{ "id": "core/body", "attachTo": "body" }' );
 		$p->set_attribute( 'data-wp-key', 'wp-lightbox-overlay' );
+		$p->set_attribute( 'data-wp-class--show-closing-animation', 'state.overlayOpened' );
 		return $p->get_updated_html();
 	} else {
 		return $buffer;
@@ -54,6 +55,6 @@ function gutenberg_core_image_lightbox_flush_footer_buffer() {
 add_action( 'wp_footer', 'gutenberg_core_image_lightbox_flush_footer_buffer', 11 );
 
 function gutenberg_iapi_router_region_based() {
-	wp_interactivity_config( 'core/router', array( 'clientNavigationMode' => 'regionBased' ) );
+	wp_interactivity_config( 'core/router', array( 'clientNavigationMode' => 'experimentalFullPage' ) );
 }
 add_action( 'init', 'gutenberg_iapi_router_region_based' );
