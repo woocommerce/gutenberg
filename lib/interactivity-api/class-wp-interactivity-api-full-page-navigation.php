@@ -28,21 +28,19 @@ if ( ! class_exists( 'WP_Interactivity_API_Full_Page_Navigation' ) ) {
 		 * Returns whether the client navigation mode is `experimentalFullPage`.
 		 */
 		public function is_enabled() {
-			$unlock_message     = apply_filters( 'wp_interactivity_experimental_full_page_client_navigation', '' );
 			$iapi_router_config = wp_interactivity_config( 'core/router' );
-			return (
-				self::$unlock_message === $unlock_message &&
-				'experimentalFullPage' === $iapi_router_config['clientNavigationMode'] ?? ''
-			);
+			return 'experimentalFullPage' === $iapi_router_config['clientNavigationMode'] ?? '';
 		}
 
 		/**
 		 * Sets the client navigation mode by default.
 		 */
 		public function set_default_mode() {
+			$unlock_message = apply_filters( 'wp_interactivity_experimental_full_page_client_navigation', '' );
+			$default_mode   = self::$unlock_message === $unlock_message ? 'experimentalFullPage' : 'regionBased';
 			wp_interactivity_config(
 				'core/router',
-				array( 'clientNavigationMode' => 'experimentalFullPage' )
+				array( 'clientNavigationMode' => $default_mode )
 			);
 		}
 
