@@ -20,7 +20,7 @@ if ( ! class_exists( 'WP_Interactivity_API_Full_Page_Navigation' ) ) {
 		public function __construct() {
 			add_action( 'init', array( $this, 'set_default_mode' ), 9 );
 			add_action( 'wp_head', array( $this, 'buffer_start' ) );
-			add_action( 'wp_footer', array( $this, 'buffer_end' ) );
+			add_action( 'wp_body_open', array( $this, 'buffer_end' ) );
 			add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_script_modules' ) );
 		}
 
