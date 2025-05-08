@@ -31,20 +31,3 @@ function gutenberg_register_interactivity_script_module_data_hooks() {
 	}
 }
 add_action( 'after_setup_theme', 'gutenberg_register_interactivity_script_module_data_hooks', 20 );
-
-/*
- * Unlocks the experimental full-page client-side navigation feature of the
- * interactivity-router module.
- *
- * IMPORTANT: this code is not meant to be included in Gutenberg. Instead, it
- * will be part of an external plugin to test this feature separately.
- *
- * Check out the file:
- * `lib/interactivity-api/class-wp-interactivity-api-full-page-navigation.php`.
- */
-add_filter(
-	'wp_interactivity_experimental_full_page_client_navigation',
-	function () {
-		return 'I acknowledge that full-page client-side navigation is still experimental and will probably change, breaking my plugin or website on its next version.';
-	}
-);
