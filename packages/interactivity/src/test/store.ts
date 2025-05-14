@@ -74,7 +74,7 @@ describe( 'Interactivity API', () => {
 							sync( n ) {
 								return n;
 							},
-							*async( n ): Generator< unknown, number, unknown > {
+							*async( n ): AsyncAction< number > {
 								const n1 = myStore.actions.sync( n );
 								return myStore.state.derived + n1 + n;
 							},
@@ -114,12 +114,17 @@ describe( 'Interactivity API', () => {
 							sync( n: number ) {
 								return n;
 							},
-							*async(
-								n: number
-							): Generator< unknown, number, number > {
+							*async( n: number ): AsyncAction< number > {
 								const n1: number =
-									yield myStore.actions.sync( n );
+									( yield myStore.actions.async2(
+										n
+									) ) as TypeYield<
+										typeof myStore.actions.async2
+									>;
 								return myStore.state.derived + n1 + n;
+							},
+							*async2( n: number ) {
+								return n;
 							},
 						},
 					};
@@ -161,12 +166,17 @@ describe( 'Interactivity API', () => {
 							sync( n: number ) {
 								return n;
 							},
-							*async(
-								n: number
-							): Generator< unknown, number, number > {
+							*async( n: number ): AsyncAction< number > {
 								const n1: number =
-									yield myStore.actions.sync( n );
+									( yield myStore.actions.async2(
+										n
+									) ) as TypeYield<
+										typeof myStore.actions.async2
+									>;
 								return myStore.state.derived + n1 + n;
+							},
+							*async2( n: number ) {
+								return n;
 							},
 						},
 					} );
@@ -191,6 +201,7 @@ describe( 'Interactivity API', () => {
 						actions: {
 							sync: ( n: number ) => number;
 							async: ( n: number ) => Promise< number >;
+							async2: ( n: number ) => AsyncAction< number >;
 						};
 						callbacks: {
 							existent: number;
@@ -202,10 +213,17 @@ describe( 'Interactivity API', () => {
 							sync( n ) {
 								return n;
 							},
-							*async( n ): Generator< unknown, number, number > {
+							*async( n ): AsyncAction< number > {
 								const n1: number =
-									yield myStore.actions.sync( n );
+									( yield myStore.actions.async2(
+										n
+									) ) as TypeYield<
+										typeof myStore.actions.async2
+									>;
 								return n1 + n;
+							},
+							*async2( n: number ) {
+								return n;
 							},
 						},
 						callbacks: {
