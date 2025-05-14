@@ -471,7 +471,7 @@ type Store = {
 };
 ```
 
-There's something to keep in mind when when using asynchronous actions. Just like with the derived state, if the asynchronous action needs to return a value and this value directly depends on some part of the global state, TypeScript will not be able to infer the type due to a circular reference.
+There's something to keep in mind when using asynchronous actions. Just like with the derived state, if an asynchronous action uses `state` within a `yield` expression (for example, by passing `state` to an async function that is then yielded) or if its return value depends on `state`, TypeScript might not be able to infer the types correctly due to a potential circular reference.
 
     ```ts
     const { state, actions } = store( 'myCounterPlugin', {
@@ -479,31 +479,38 @@ There's something to keep in mind when when using asynchronous actions. Just lik
     		counter: 0,
     	},
     	actions: {
-    		*delayedReturn() {
-    			yield new Promise( ( r ) => setTimeout( r, 1000 ) );
-    			return state.counter; // TypeScript can't infer this return type.
+    		*delayedOperation() {
+    			// Example: state.counter is used as part of the yielded logic.
+    			yield fetch(`/api/counter-${state.counter}`);
+
+    			// And/or the final return value depends on state.
+    			return state.counter + 1;
     		},
     	},
     } );
     ```
 
-    In this case, just as we did with the derived state, we must manually type the return value of the generator.
+In such cases, TypeScript might issue a warning about a circular reference or default to `any`. To solve this, you need to manually type the generator function. The Interactivity API provides a helper type, `AsyncAction<ReturnType>`, for this purpose.
 
     ```ts
+    import { store, type AsyncAction } from '@wordpress/interactivity';
+
     const { state, actions } = store( 'myCounterPlugin', {
     	state: {
     		counter: 0,
     	},
     	actions: {
-    		*delayedReturn(): Generator< unknown, number, unknown > {
-    			yield new Promise( ( r ) => setTimeout( r, 1000 ) );
-    			return state.counter; // Now this is correctly inferred.
+    		*delayedOperation(): AsyncAction<number> {
+    			// Now, this doesn't cause a circular reference.
+    			yield fetch(`/api/counter-${state.counter}`);
+    			// Now, this is correctly typed.
+    			return state.counter;
     		},
     	},
     } );
     ```
 
-    That's it! Remember that the return type of a Generator is the second generic argument: `Generator< unknown, ReturnType, unknown >`.
+That's it! The `AsyncAction<ReturnType>` helper is defined as `Generator<any, ReturnType, unknown>`. By using `any` for the type of values yielded by the generator, it helps break the circular reference, allowing TypeScript to correctly infer the types when `state` is involved in `yield` expressions or in the final return value. You only need to specify the final `ReturnType` of your asynchronous action.
 
 ## Typing stores that are divided into multiple parts
 
