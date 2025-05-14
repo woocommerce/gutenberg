@@ -1,7 +1,7 @@
 /**
  * Internal dependencies
  */
-import { store } from '../store';
+import { store, type AsyncAction, type TypeYield } from '../store';
 
 describe( 'Interactivity API', () => {
 	describe( 'store', () => {
@@ -316,6 +316,42 @@ describe( 'Interactivity API', () => {
 				);
 
 				actions2.incrementValue( 1 ) satisfies void;
+			} );
+
+			describe( 'async actions can pass state to yields and type the yield returns', () => {
+				// eslint-disable-next-line no-unused-expressions
+				async () => {
+					type Store = {
+						state: {
+							someValue: string;
+						};
+						actions: {
+							asyncAction: () => Promise< number >;
+						};
+					};
+
+					const asyncFunction = async (
+						someValue: string
+					): Promise< string > => {
+						return someValue;
+					};
+
+					const { state, actions } = store< Store >( 'test', {
+						actions: {
+							*asyncAction(): AsyncAction< number > {
+								( yield asyncFunction(
+									state.someValue
+								) ) as TypeYield<
+									typeof asyncFunction
+								> satisfies string;
+
+								return 1;
+							},
+						},
+					} );
+
+					( await actions.asyncAction() ) satisfies number;
+				};
 			} );
 		} );
 	} );
