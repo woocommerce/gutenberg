@@ -160,7 +160,21 @@ const renderRegions = ( page: Page ) => {
 		// Render unattached regions.
 		for ( const id in regionsToAttach ) {
 			const parent = document.querySelector( regionsToAttach[ id ] );
-			const region = document.createElement( 'div' ); // TODO - use type from preact element?
+
+			// Get the vnode and extract its type correctly
+			const vnode = page.regions[ id ];
+
+			// If wrapped with Directives, get the original type from `props.type`.
+			const originalType =
+				typeof vnode.type === 'function' && vnode.props.type
+					? vnode.props.type
+					: vnode.type;
+
+			// Use string type for createElement or default to 'div'.
+			const elementType =
+				typeof originalType === 'string' ? originalType : 'div';
+
+			const region = document.createElement( elementType );
 			parent.appendChild( region );
 
 			const fragment = getRegionRootFragment( region );
