@@ -1,7 +1,12 @@
 /**
  * WordPress dependencies
  */
-import { store, getContext, withSyncEvent } from '@wordpress/interactivity';
+import {
+	store,
+	getContext,
+	getServerContext,
+	withSyncEvent,
+} from '@wordpress/interactivity';
 
 const { state } = store( 'router-regions', {
 	state: {
@@ -43,6 +48,11 @@ const { state } = store( 'router-regions', {
 				if ( context.counter ) {
 					context.counter.value = context.counter.initialValue;
 				}
+			},
+			updateCounterFromServer() {
+				const context = getContext();
+				const serverContext = getServerContext();
+				context.counter.value = serverContext.counter.value;
 			},
 		},
 		addItem() {

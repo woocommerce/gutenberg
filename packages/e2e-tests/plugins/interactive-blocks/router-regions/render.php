@@ -121,3 +121,34 @@
 		</p>
 	</div>
 </div>
+
+<?php if ( isset( $attributes['regionWithAttachTo'] ) ) : ?>
+	<div
+		data-testid="region-3"
+		data-wp-interactive="router-regions"
+		data-wp-router-region='{ "id": "region-3","attachTo": ".wp-site-blocks" }'
+		<?php
+			echo wp_interactivity_data_wp_context(
+				array(
+					'text'    => 'region-3',
+					'counter' => array(
+						'value' => $attributes['counter'] ?? 0,
+					),
+				)
+			);
+		?>
+	>
+		<h2>Region with <code>attachTo</code></h2>
+		<p
+			data-testid="text"
+			data-wp-text="context.text"
+		>not hydrated</p>
+
+		<button
+			data-testid="counter"
+			data-wp-text="context.counter.value"
+			data-wp-on--click="actions.counter.increment"
+			data-wp-watch="actions.counter.updateCounterFromServer"
+		>NaN</button>
+	</div>
+<?php endif; ?>

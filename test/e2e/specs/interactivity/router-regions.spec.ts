@@ -14,6 +14,34 @@ test.describe( 'Router regions', () => {
 			alias: 'router regions - page 1',
 			attributes: { page: 1, next },
 		} );
+
+		// These pages are for testing router regions with `attachTo`.
+		const pageAttachTo2 = await utils.addPostWithBlock(
+			'test/router-regions',
+			{
+				alias: 'router regions - page 2',
+				attributes: {
+					page: 'attachTo2',
+					regionWithAttachTo: true,
+					counter: 10,
+				},
+			}
+		);
+		const pageAttachTo1 = await utils.addPostWithBlock(
+			'test/router-regions',
+			{
+				alias: 'router regions - page 2',
+				attributes: {
+					page: 'attachTo1',
+					next: pageAttachTo2,
+					regionWithAttachTo: true,
+				},
+			}
+		);
+		await utils.addPostWithBlock( 'test/router-regions', {
+			alias: 'router regions - page 1 - attachTo',
+			attributes: { page: 1, next: pageAttachTo1 },
+		} );
 	} );
 
 	test.beforeEach( async ( { interactivityUtils: utils, page } ) => {
@@ -143,5 +171,64 @@ test.describe( 'Router regions', () => {
 		);
 		await expect( invalidRegionText1 ).toHaveText( 'content from page 1' );
 		await expect( invalidRegionText2 ).toHaveText( 'content from page 1' );
+	} );
+
+	test( 'should support router regions with the `attachTo` property.', async ( {
+		page,
+		interactivityUtils: utils,
+	} ) => {
+		await page.goto(
+			utils.getLink( 'router regions - page 1 - attachTo' )
+		);
+
+		const region3 = page.getByTestId( 'region-3' );
+		const text = region3.getByTestId( 'text' );
+		const counter = region3.getByTestId( 'counter' );
+
+		await expect( region3 ).toBeHidden();
+		await expect( text ).toBeHidden();
+		await expect( counter ).toBeHidden();
+
+		await page.getByTestId( 'next' ).click();
+
+		// Page attachTo 1
+		await expect( region3 ).toBeVisible();
+		await expect( text ).toBeVisible();
+		await expect( text ).toHaveText( 'region-3' );
+		await expect( counter ).toBeVisible();
+		await expect( counter ).toHaveText( '0' );
+
+		await counter.click( { clickCount: 3, delay: 50 } );
+		await expect( counter ).toHaveText( '3' );
+
+		await page.getByTestId( 'next' ).click();
+
+		// Page attachTo 2
+		await expect( region3 ).toBeVisible();
+		await expect( text ).toBeVisible();
+		await expect( text ).toHaveText( 'region-3' );
+		await expect( counter ).toBeVisible();
+		await expect( counter ).toHaveText( '10' );
+
+		await counter.click( { clickCount: 3, delay: 50 } );
+		await expect( counter ).toHaveText( '13' );
+
+		await page.goBack();
+
+		// Page attachTo 1
+		await expect( region3 ).toBeVisible();
+		await expect( text ).toBeVisible();
+		await expect( text ).toHaveText( 'region-3' );
+		await expect( counter ).toBeVisible();
+		await expect( counter ).toHaveText( '0' );
+
+		await counter.click( { clickCount: 3, delay: 50 } );
+		await expect( counter ).toHaveText( '3' );
+
+		await page.goBack();
+
+		await expect( region3 ).toBeHidden();
+		await expect( text ).toBeHidden();
+		await expect( counter ).toBeHidden();
 	} );
 } );
