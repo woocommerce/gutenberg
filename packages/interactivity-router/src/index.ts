@@ -161,19 +161,13 @@ const renderRegions = ( page: Page ) => {
 		for ( const id in regionsToAttach ) {
 			const parent = document.querySelector( regionsToAttach[ id ] );
 
-			// Get the vnode and extract its type correctly
-			const vnode = page.regions[ id ];
+			// Get the type from the vnode. If wrapped with Directives, get the
+			// original type from `props.type`.
+			const { props, type } = page.regions[ id ];
+			const elementType = typeof type === 'function' ? props.type : type;
 
-			// If wrapped with Directives, get the original type from `props.type`.
-			const originalType =
-				typeof vnode.type === 'function' && vnode.props.type
-					? vnode.props.type
-					: vnode.type;
-
-			// Use string type for createElement or default to 'div'.
-			const elementType =
-				typeof originalType === 'string' ? originalType : 'div';
-
+			// Create an element with the obtained type where the region will be
+			// rendered. The type should match the one of the root vnode.
 			const region = document.createElement( elementType );
 			parent.appendChild( region );
 
