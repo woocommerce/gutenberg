@@ -59,4 +59,9 @@ const { state } = store( 'router-regions', {
 			state.items.push( `item ${ state.items.length + 1 }` );
 		},
 	},
+	callbacks: {
+		init() {
+			getContext().hasDirectives = true;
+		},
+	},
 } );

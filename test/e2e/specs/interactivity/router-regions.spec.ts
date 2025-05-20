@@ -35,10 +35,10 @@ test.describe( 'Router regions', () => {
 		};
 		const region6 = {
 			type: 'section',
+			hasDirectives: true,
 			data: {
 				id: 'region6',
 				attachTo: '#regions-with-attach-to',
-				hasDirectives: true,
 			},
 		};
 
@@ -237,20 +237,19 @@ test.describe( 'Router regions', () => {
 			await expect( region ).toBeVisible();
 
 			const text = region.getByTestId( 'text' );
-			const counterButton = region.getByTestId( 'counter-button' );
-			const counterValue = region.getByTestId( 'counter-value' );
-			const counterServerValue = region.getByTestId(
-				'counter-server-value'
-			);
+			const clientCounter = region.getByTestId( 'client-counter' );
+			const serverCounter = region.getByTestId( 'server-counter' );
 
 			await expect( text ).toHaveText( regionId );
-			await expect( counterValue ).toHaveText( '0' );
-			await expect( counterServerValue ).toHaveText( '0' );
+			await expect( clientCounter ).toHaveText( '0' );
+			await expect( serverCounter ).toHaveText( '0' );
 
-			await counterButton.click( { clickCount: 3, delay: 50 } );
-			await expect( counterValue ).toHaveText( '3' );
-			await expect( counterServerValue ).toHaveText( '0' );
+			await clientCounter.click( { clickCount: 3, delay: 50 } );
+			await expect( clientCounter ).toHaveText( '3' );
 		}
+
+		// Region 6 has an init directive that should have been executed.
+		await expect( region6.getByTestId( 'has-directives' ) ).toBeVisible();
 
 		// Navigate to "Page attachTo 2".
 		await page.getByTestId( 'next' ).click();
@@ -261,19 +260,15 @@ test.describe( 'Router regions', () => {
 			await expect( region ).toBeVisible();
 
 			const text = region.getByTestId( 'text' );
-			const counterButton = region.getByTestId( 'counter-button' );
-			const counterValue = region.getByTestId( 'counter-value' );
-			const counterServerValue = region.getByTestId(
-				'counter-server-value'
-			);
+			const clientCounter = region.getByTestId( 'client-counter' );
+			const serverCounter = region.getByTestId( 'server-counter' );
 
 			await expect( text ).toHaveText( regionId );
-			await expect( counterValue ).toHaveText( '3' );
-			await expect( counterServerValue ).toHaveText( '10' );
+			await expect( clientCounter ).toHaveText( '3' );
+			await expect( serverCounter ).toHaveText( '10' );
 
-			await counterButton.click( { clickCount: 3, delay: 50 } );
-			await expect( counterValue ).toHaveText( '6' );
-			await expect( counterServerValue ).toHaveText( '10' );
+			await clientCounter.click( { clickCount: 3, delay: 50 } );
+			await expect( clientCounter ).toHaveText( '6' );
 		}
 
 		// Navigate back to "Page attachTo 1".
@@ -285,19 +280,15 @@ test.describe( 'Router regions', () => {
 			await expect( region ).toBeVisible();
 
 			const text = region.getByTestId( 'text' );
-			const counterButton = region.getByTestId( 'counter-button' );
-			const counterValue = region.getByTestId( 'counter-value' );
-			const counterServerValue = region.getByTestId(
-				'counter-server-value'
-			);
+			const clientCounter = region.getByTestId( 'client-counter' );
+			const serverCounter = region.getByTestId( 'server-counter' );
 
 			await expect( text ).toHaveText( regionId );
-			await expect( counterValue ).toHaveText( '6' );
-			await expect( counterServerValue ).toHaveText( '0' );
+			await expect( clientCounter ).toHaveText( '6' );
+			await expect( serverCounter ).toHaveText( '0' );
 
-			await counterButton.click( { clickCount: 3, delay: 50 } );
-			await expect( counterValue ).toHaveText( '9' );
-			await expect( counterServerValue ).toHaveText( '0' );
+			await clientCounter.click( { clickCount: 3, delay: 50 } );
+			await expect( clientCounter ).toHaveText( '9' );
 		}
 
 		// Navigate back to the initial page.
@@ -317,14 +308,15 @@ test.describe( 'Router regions', () => {
 			await expect( region ).toBeVisible();
 
 			const text = region.getByTestId( 'text' );
-			const counterValue = region.getByTestId( 'counter-value' );
-			const counterServerValue = region.getByTestId(
-				'counter-server-value'
-			);
+			const clientCounter = region.getByTestId( 'client-counter' );
+			const serverCounter = region.getByTestId( 'server-counter' );
 
 			await expect( text ).toHaveText( regionId );
-			await expect( counterValue ).toHaveText( '0' );
-			await expect( counterServerValue ).toHaveText( '0' );
+			await expect( clientCounter ).toHaveText( '0' );
+			await expect( serverCounter ).toHaveText( '0' );
 		}
+
+		// Region 6 has an init directive that should have been executed.
+		await expect( region6.getByTestId( 'has-directives' ) ).toBeVisible();
 	} );
 } );

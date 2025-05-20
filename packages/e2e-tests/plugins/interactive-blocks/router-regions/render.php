@@ -128,7 +128,9 @@
 		$region_type    = esc_attr( $region['type'] );
 		$region_id      = esc_attr( $region['data']['id'] );
 		$region_data    = wp_json_encode( $region['data'] );
-		$has_directives = isset( $attributes['hasDirectives'] ) ? 'data-wp-init="callback.updateText"' : '';
+		$has_directives = isset( $region['hasDirectives'] )
+			? ( wp_interactivity_data_wp_context( array() ) . ' data-wp-init="callbacks.init"' )
+			: '';
 		$context_data   = wp_interactivity_data_wp_context(
 			array(
 				'text'    => $region['data']['id'],
@@ -154,27 +156,31 @@
 				>not hydrated</p>
 
 				<p> Client value:
-					<output
-						data-testid="counter-value"
+					<button
+						data-testid="client-counter"
 						data-wp-text="context.counter.value"
+						data-wp-on--click="actions.counter.increment"
 					>
 						NaN
-					</output>
+					</button>
 				</p>
 				<p> Server value:
 					<output
-						data-testid="counter-server-value"
+						data-testid="server-counter"
 						data-wp-text="context.counter.serverValue"
 						data-wp-watch="actions.counter.updateCounterFromServer"
 					>
 						NaN
 					</output>
 				</p>
-				<button
-					data-testid="counter-button"
-					data-wp-on--click="actions.counter.increment"
-				>+1</button>
 			</div>
+			<p
+				data-testid="has-directives"
+				data-wp-bind--hidden="!context.hasDirectives"
+				hidden
+			>
+				region with root directives
+			</p>
 		</$region_type>
 HTML;
 
