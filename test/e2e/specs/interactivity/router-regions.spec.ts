@@ -1,4 +1,9 @@
 /**
+ * External dependencies
+ */
+import { type Locator } from '@playwright/test';
+
+/**
  * Internal dependencies
  */
 import { test, expect } from './fixtures';
@@ -16,13 +21,34 @@ test.describe( 'Router regions', () => {
 		} );
 
 		// These pages are for testing router regions with `attachTo`.
+		const region3 = {
+			type: 'div',
+			data: { id: 'region3', attachTo: 'body' },
+		};
+		const region4 = {
+			type: 'div',
+			data: { id: 'region4', attachTo: '#regions-with-attach-to' },
+		};
+		const region5 = {
+			type: 'section',
+			data: { id: 'region5', attachTo: 'body' },
+		};
+		const region6 = {
+			type: 'section',
+			data: {
+				id: 'region6',
+				attachTo: '#regions-with-attach-to',
+				hasDirectives: true,
+			},
+		};
+
 		const pageAttachTo2 = await utils.addPostWithBlock(
 			'test/router-regions',
 			{
 				alias: 'router regions - page 2',
 				attributes: {
 					page: 'attachTo2',
-					regionWithAttachTo: true,
+					regionsWithAttachTo: [ region3, region4, region5, region6 ],
 					counter: 10,
 				},
 			}
@@ -34,7 +60,7 @@ test.describe( 'Router regions', () => {
 				attributes: {
 					page: 'attachTo1',
 					next: pageAttachTo2,
-					regionWithAttachTo: true,
+					regionsWithAttachTo: [ region3, region4, region5, region6 ],
 				},
 			}
 		);
@@ -181,54 +207,124 @@ test.describe( 'Router regions', () => {
 			utils.getLink( 'router regions - page 1 - attachTo' )
 		);
 
-		const region3 = page.getByTestId( 'region-3' );
-		const text = region3.getByTestId( 'text' );
-		const counter = region3.getByTestId( 'counter' );
+		const bodyLocator = page.locator( 'body' );
+		const regionsLocator = page.locator( '#regions-with-attach-to' );
 
+		const region3 = bodyLocator.getByTestId( 'region3' );
+		const region4 = regionsLocator.getByTestId( 'region4' );
+		const region5 = bodyLocator.getByTestId( 'region5' );
+		const region6 = regionsLocator.getByTestId( 'region6' );
+
+		const regions: Record< string, Locator > = {
+			region3,
+			region4,
+			region5,
+			region6,
+		};
+
+		// Regions with `attachTo` should initially be hidden.
 		await expect( region3 ).toBeHidden();
-		await expect( text ).toBeHidden();
-		await expect( counter ).toBeHidden();
+		await expect( region4 ).toBeHidden();
+		await expect( region5 ).toBeHidden();
+		await expect( region6 ).toBeHidden();
 
+		// Navigate to "Page attachTo 1".
 		await page.getByTestId( 'next' ).click();
 
-		// Page attachTo 1
-		await expect( region3 ).toBeVisible();
-		await expect( text ).toBeVisible();
-		await expect( text ).toHaveText( 'region-3' );
-		await expect( counter ).toBeVisible();
-		await expect( counter ).toHaveText( '0' );
+		// Regions should appear in place, be hydrated, and interactive.
+		for ( const regionId in regions ) {
+			const region = regions[ regionId ];
+			await expect( region ).toBeVisible();
 
-		await counter.click( { clickCount: 3, delay: 50 } );
-		await expect( counter ).toHaveText( '3' );
+			const text = region.getByTestId( 'text' );
+			const counterButton = region.getByTestId( 'counter-button' );
+			const counterValue = region.getByTestId( 'counter-value' );
+			const counterServerValue = region.getByTestId(
+				'counter-server-value'
+			);
 
+			await expect( text ).toHaveText( regionId );
+			await expect( counterValue ).toHaveText( '0' );
+			await expect( counterServerValue ).toHaveText( '0' );
+
+			await counterButton.click( { clickCount: 3, delay: 50 } );
+			await expect( counterValue ).toHaveText( '3' );
+			await expect( counterServerValue ).toHaveText( '0' );
+		}
+
+		// Navigate to "Page attachTo 2".
 		await page.getByTestId( 'next' ).click();
 
-		// Page attachTo 2
-		await expect( region3 ).toBeVisible();
-		await expect( text ).toBeVisible();
-		await expect( text ).toHaveText( 'region-3' );
-		await expect( counter ).toBeVisible();
-		await expect( counter ).toHaveText( '10' );
+		// Check that regions remains hydrated and interactive.
+		for ( const regionId in regions ) {
+			const region = regions[ regionId ];
+			await expect( region ).toBeVisible();
 
-		await counter.click( { clickCount: 3, delay: 50 } );
-		await expect( counter ).toHaveText( '13' );
+			const text = region.getByTestId( 'text' );
+			const counterButton = region.getByTestId( 'counter-button' );
+			const counterValue = region.getByTestId( 'counter-value' );
+			const counterServerValue = region.getByTestId(
+				'counter-server-value'
+			);
 
+			await expect( text ).toHaveText( regionId );
+			await expect( counterValue ).toHaveText( '3' );
+			await expect( counterServerValue ).toHaveText( '10' );
+
+			await counterButton.click( { clickCount: 3, delay: 50 } );
+			await expect( counterValue ).toHaveText( '6' );
+			await expect( counterServerValue ).toHaveText( '10' );
+		}
+
+		// Navigate back to "Page attachTo 1".
 		await page.goBack();
 
-		// Page attachTo 1
-		await expect( region3 ).toBeVisible();
-		await expect( text ).toBeVisible();
-		await expect( text ).toHaveText( 'region-3' );
-		await expect( counter ).toBeVisible();
-		await expect( counter ).toHaveText( '0' );
+		// Check that regions remains hydrated and interactive.
+		for ( const regionId in regions ) {
+			const region = regions[ regionId ];
+			await expect( region ).toBeVisible();
 
-		await counter.click( { clickCount: 3, delay: 50 } );
-		await expect( counter ).toHaveText( '3' );
+			const text = region.getByTestId( 'text' );
+			const counterButton = region.getByTestId( 'counter-button' );
+			const counterValue = region.getByTestId( 'counter-value' );
+			const counterServerValue = region.getByTestId(
+				'counter-server-value'
+			);
 
+			await expect( text ).toHaveText( regionId );
+			await expect( counterValue ).toHaveText( '6' );
+			await expect( counterServerValue ).toHaveText( '0' );
+
+			await counterButton.click( { clickCount: 3, delay: 50 } );
+			await expect( counterValue ).toHaveText( '9' );
+			await expect( counterServerValue ).toHaveText( '0' );
+		}
+
+		// Navigate back to the initial page.
 		await page.goBack();
 
+		// Regions should be unmounted.
 		await expect( region3 ).toBeHidden();
-		await expect( text ).toBeHidden();
-		await expect( counter ).toBeHidden();
+		await expect( region4 ).toBeHidden();
+		await expect( region5 ).toBeHidden();
+		await expect( region6 ).toBeHidden();
+
+		await page.goForward();
+
+		// Regions should b reset when mounted again.
+		for ( const regionId in regions ) {
+			const region = regions[ regionId ];
+			await expect( region ).toBeVisible();
+
+			const text = region.getByTestId( 'text' );
+			const counterValue = region.getByTestId( 'counter-value' );
+			const counterServerValue = region.getByTestId(
+				'counter-server-value'
+			);
+
+			await expect( text ).toHaveText( regionId );
+			await expect( counterValue ).toHaveText( '0' );
+			await expect( counterServerValue ).toHaveText( '0' );
+		}
 	} );
 } );

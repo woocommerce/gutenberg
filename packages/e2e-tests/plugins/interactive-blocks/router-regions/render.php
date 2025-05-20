@@ -122,33 +122,63 @@
 	</div>
 </div>
 
-<?php if ( isset( $attributes['regionWithAttachTo'] ) ) : ?>
-	<div
-		data-testid="region-3"
-		data-wp-interactive="router-regions"
-		data-wp-router-region='{ "id": "region-3","attachTo": ".wp-site-blocks" }'
-		<?php
-			echo wp_interactivity_data_wp_context(
-				array(
-					'text'    => 'region-3',
-					'counter' => array(
-						'value' => $attributes['counter'] ?? 0,
-					),
-				)
-			);
-		?>
-	>
-		<h2>Region with <code>attachTo</code></h2>
-		<p
-			data-testid="text"
-			data-wp-text="context.text"
-		>not hydrated</p>
+<div id="regions-with-attach-to" data-testid="regions-with-attach-to">
+	<?php
+	foreach ( $attributes['regionsWithAttachTo'] ?? array() as $region ) {
+		$region_type    = esc_attr( $region['type'] );
+		$region_id      = esc_attr( $region['data']['id'] );
+		$region_data    = wp_json_encode( $region['data'] );
+		$has_directives = isset( $attributes['hasDirectives'] ) ? 'data-wp-init="callback.updateText"' : '';
+		$context_data   = wp_interactivity_data_wp_context(
+			array(
+				'text'    => $region['data']['id'],
+				'counter' => array(
+					'value'       => $attributes['counter'] ?? 0,
+					'serverValue' => $attributes['counter'] ?? 0,
+				),
+			)
+		);
 
-		<button
-			data-testid="counter"
-			data-wp-text="context.counter.value"
-			data-wp-on--click="actions.counter.increment"
-			data-wp-watch="actions.counter.updateCounterFromServer"
-		>NaN</button>
-	</div>
-<?php endif; ?>
+		$html = <<<HTML
+		<$region_type
+			data-wp-interactive="router-regions"
+			data-wp-router-region='$region_data'
+			data-testid="$region_id"
+			$has_directives
+		>
+			<div $context_data>
+				<h2>Region with <code>attachTo</code></h2>
+				<p
+					data-testid="text"
+					data-wp-text="context.text"
+				>not hydrated</p>
+
+				<p> Client value:
+					<output
+						data-testid="counter-value"
+						data-wp-text="context.counter.value"
+					>
+						NaN
+					</output>
+				</p>
+				<p> Server value:
+					<output
+						data-testid="counter-server-value"
+						data-wp-text="context.counter.serverValue"
+						data-wp-watch="actions.counter.updateCounterFromServer"
+					>
+						NaN
+					</output>
+				</p>
+				<button
+					data-testid="counter-button"
+					data-wp-on--click="actions.counter.increment"
+				>+1</button>
+			</div>
+		</$region_type>
+HTML;
+
+		echo $html;
+	}
+	?>
+</div>

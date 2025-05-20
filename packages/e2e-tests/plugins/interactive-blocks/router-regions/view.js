@@ -52,7 +52,7 @@ const { state } = store( 'router-regions', {
 			updateCounterFromServer() {
 				const context = getContext();
 				const serverContext = getServerContext();
-				context.counter.value = serverContext.counter.value;
+				context.counter.serverValue = serverContext.counter.serverValue;
 			},
 		},
 		addItem() {
