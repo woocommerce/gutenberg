@@ -124,6 +124,16 @@
 
 <div id="regions-with-attach-to" data-testid="regions-with-attach-to">
 	<?php
+	/*
+	 * Set of router regions with the `attachTo` property specified,
+	 * as defined in the `regionsWithAttachTo` attribute.
+	 *
+	 * Each object inside such an attribute have the following properties:
+	 * - `type`: the type of the HTML element where the `data-wp-router-region` directive is defined, e.g. 'div'.
+	 * - `data`: the data passed to the `data-wp-router-region` directive, i.e., `id` and `attachTo`.
+	 * - `hasDirectives`: a boolean indicating that the top element of the router region have actual directives that
+	 *     make the element to be wrapped in a `Directives` component.
+	 */
 	foreach ( $attributes['regionsWithAttachTo'] ?? array() as $region ) {
 		$region_type    = esc_attr( $region['type'] );
 		$region_id      = esc_attr( $region['data']['id'] );
