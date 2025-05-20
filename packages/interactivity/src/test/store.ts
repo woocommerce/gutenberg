@@ -115,12 +115,11 @@ describe( 'Interactivity API', () => {
 								return n;
 							},
 							*async( n: number ): AsyncAction< number > {
-								const n1: number =
-									( yield myStore.actions.async2(
-										n
-									) ) as TypeYield<
-										typeof myStore.actions.async2
-									>;
+								const n1 = ( yield myStore.actions.async2(
+									n
+								) ) as TypeYield<
+									typeof myStore.actions.async2
+								> satisfies number;
 								return myStore.state.derived + n1 + n;
 							},
 							*async2( n: number ) {
@@ -167,12 +166,11 @@ describe( 'Interactivity API', () => {
 								return n;
 							},
 							*async( n: number ): AsyncAction< number > {
-								const n1: number =
-									( yield myStore.actions.async2(
-										n
-									) ) as TypeYield<
-										typeof myStore.actions.async2
-									>;
+								const n1 = ( yield myStore.actions.async2(
+									n
+								) ) as TypeYield<
+									typeof myStore.actions.async2
+								> satisfies number;
 								return myStore.state.derived + n1 + n;
 							},
 							*async2( n: number ) {
@@ -214,12 +212,11 @@ describe( 'Interactivity API', () => {
 								return n;
 							},
 							*async( n ): AsyncAction< number > {
-								const n1: number =
-									( yield myStore.actions.async2(
-										n
-									) ) as TypeYield<
-										typeof myStore.actions.async2
-									>;
+								const n1 = ( yield myStore.actions.async2(
+									n
+								) ) as TypeYield<
+									typeof myStore.actions.async2
+								> satisfies number;
 								return n1 + n;
 							},
 							*async2( n: number ) {
