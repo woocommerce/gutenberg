@@ -17,6 +17,13 @@ if ( ! class_exists( 'WP_Interactivity_API_Full_Page_Navigation' ) ) {
 
 		private static $unlock_message = 'I acknowledge that full-page client-side navigation is still experimental and will probably change, breaking my plugin or website on its next version.';
 
+		public static function instance() {
+			if ( null === self::$instance ) {
+				self::$instance = new WP_Interactivity_API_Full_Page_Navigation();
+			}
+			return self::$instance;
+		}
+
 		public function __construct() {
 			add_action( 'init', array( $this, 'set_default_mode' ), 9 );
 			add_action( 'wp_head', array( $this, 'buffer_start' ) );
@@ -96,13 +103,6 @@ if ( ! class_exists( 'WP_Interactivity_API_Full_Page_Navigation' ) ) {
 			} else {
 				return $buffer;
 			}
-		}
-
-		public static function instance() {
-			if ( null === self::$instance ) {
-				self::$instance = new WP_Interactivity_API_Full_Page_Navigation();
-			}
-			return self::$instance;
 		}
 	}
 }
