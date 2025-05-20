@@ -503,8 +503,9 @@ In such cases, TypeScript might issue a warning about a circular reference or de
     		*delayedOperation(): AsyncAction< number > {
     			// Now, this doesn't cause a circular reference.
     			yield fetchCounterData( state.counter );
+
     			// Now, this is correctly typed.
-    			return state.counter;
+    			return state.counter + 1;
     		},
     	},
     } );
@@ -518,7 +519,7 @@ While `AsyncAction<ReturnType>` types the overall generator and its final return
 
 If you need to ensure the correct type for a value that a `yield` expression resolves to (e.g., the result of a `fetch` call or another async operation), you can use the `TypeYield<T>` helper. This helper takes the type of the asynchronous function/operation being yielded (`T`) and resolves to the type of the value that the promise fulfills with.
 
-Let's expand the previous example. Suppose `fetch` returns a `Response` object, and then you process it to get data:
+Suppose `fetchCounterData` returns a promise that resolves to an object:
 
     ```ts
     import { store, type AsyncAction, type TypeYield } from '@wordpress/interactivity';
@@ -547,7 +548,7 @@ Let's expand the previous example. Suppose `fetch` returns a `Response` object, 
     } );
     ```
 
-In this example, `(yield fetchCounterData(state.counter)) as TypeYield<typeof fetchCounterData>` ensures that the `data` constant is correctly typed as `{ current: number, next: number }`, matching the return type of `fetchCounterData`. This allows you to confidently access properties like `data.current` and `data.next` with type safety.
+In this example, `( yield fetchCounterData( state.counter ) ) as TypeYield< typeof fetchCounterData >` ensures that the `data` constant is correctly typed as `{ current: number, next: number }`, matching the return type of `fetchCounterData`. This allows you to confidently access properties like `data.current` and `data.next` with type safety.
 
 ## Typing stores that are divided into multiple parts
 
