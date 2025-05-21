@@ -222,6 +222,11 @@ test.describe( 'Router regions', () => {
 			region6,
 		};
 
+		// The text of this element is used to check a navigation is completed.
+		const region1Ssr = page.getByTestId( 'region-1-ssr' );
+
+		await expect( region1Ssr ).toHaveText( 'content from page 1' );
+
 		// Regions with `attachTo` should initially be hidden.
 		await expect( region3 ).toBeHidden();
 		await expect( region4 ).toBeHidden();
@@ -230,6 +235,8 @@ test.describe( 'Router regions', () => {
 
 		// Navigate to "Page attachTo 1".
 		await page.getByTestId( 'next' ).click();
+
+		await expect( region1Ssr ).toHaveText( 'content from page attachTo1' );
 
 		// Regions should appear in place, be hydrated, and interactive.
 		for ( const regionId in regions ) {
@@ -253,6 +260,7 @@ test.describe( 'Router regions', () => {
 
 		// Navigate to "Page attachTo 2".
 		await page.getByTestId( 'next' ).click();
+		await expect( region1Ssr ).toHaveText( 'content from page attachTo2' );
 
 		// Check that regions remains hydrated and interactive.
 		for ( const regionId in regions ) {
@@ -274,6 +282,8 @@ test.describe( 'Router regions', () => {
 		// Navigate back to "Page attachTo 1".
 		await page.goBack();
 
+		await expect( region1Ssr ).toHaveText( 'content from page attachTo1' );
+
 		// Check that regions remains hydrated and interactive.
 		for ( const regionId in regions ) {
 			const region = regions[ regionId ];
@@ -294,6 +304,8 @@ test.describe( 'Router regions', () => {
 		// Navigate back to the initial page.
 		await page.goBack();
 
+		await expect( region1Ssr ).toHaveText( 'content from page 1' );
+
 		// Regions should be unmounted.
 		await expect( region3 ).toBeHidden();
 		await expect( region4 ).toBeHidden();
@@ -301,6 +313,8 @@ test.describe( 'Router regions', () => {
 		await expect( region6 ).toBeHidden();
 
 		await page.goForward();
+
+		await expect( region1Ssr ).toHaveText( 'content from page attachTo1' );
 
 		// Regions should b reset when mounted again.
 		for ( const regionId in regions ) {
