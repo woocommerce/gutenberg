@@ -139,7 +139,7 @@
 		$region_id      = esc_attr( $region['data']['id'] );
 		$region_data    = wp_json_encode( $region['data'] );
 		$has_directives = isset( $region['hasDirectives'] )
-			? ( wp_interactivity_data_wp_context( array() ) . ' data-wp-init="callbacks.init"' )
+			? ' data-wp-init="callbacks.init"'
 			: '';
 		$context_data   = wp_interactivity_data_wp_context(
 			array(
@@ -184,17 +184,22 @@
 					</output>
 				</p>
 			</div>
-			<p
-				data-testid="has-directives"
-				data-wp-bind--hidden="!context.hasDirectives"
-				hidden
-			>
-				region with root directives
-			</p>
 		</$region_type>
 HTML;
 
 		echo $html;
 	}
 	?>
+</div>
+
+<!--
+	Count of times the `actions.init` function has been executed.
+	Used to verify that `data-wp-init` works on regions with `attachTo`.
+-->
+<div
+	data-wp-interactive="router-regions"
+	data-testid="init-count"
+	data-wp-text="state.initCount"
+>
+	NaN
 </div>

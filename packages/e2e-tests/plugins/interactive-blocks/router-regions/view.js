@@ -20,6 +20,7 @@ const { state } = store( 'router-regions', {
 			value: 0,
 		},
 		items: [ 'item 1', 'item 2', 'item 3' ],
+		initCount: 0,
 	},
 	actions: {
 		router: {
@@ -61,7 +62,7 @@ const { state } = store( 'router-regions', {
 	},
 	callbacks: {
 		init() {
-			getContext().hasDirectives = true;
+			state.initCount += 1;
 		},
 	},
 } );

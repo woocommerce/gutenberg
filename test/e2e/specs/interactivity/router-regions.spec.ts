@@ -222,6 +222,8 @@ test.describe( 'Router regions', () => {
 			region6,
 		};
 
+		const initCount = page.getByTestId( 'init-count' );
+
 		// The text of this element is used to check a navigation is completed.
 		const region1Ssr = page.getByTestId( 'region-1-ssr' );
 
@@ -256,7 +258,7 @@ test.describe( 'Router regions', () => {
 		}
 
 		// Region 6 has an init directive that should have been executed.
-		await expect( region6.getByTestId( 'has-directives' ) ).toBeVisible();
+		await expect( initCount ).toHaveText( '1' );
 
 		// Navigate to "Page attachTo 2".
 		await page.getByTestId( 'next' ).click();
@@ -330,7 +332,7 @@ test.describe( 'Router regions', () => {
 			await expect( serverCounter ).toHaveText( '0' );
 		}
 
-		// Region 6 has an init directive that should have been executed.
-		await expect( region6.getByTestId( 'has-directives' ) ).toBeVisible();
+		// Region 6 has an init directive that should have been executed again.
+		await expect( initCount ).toHaveText( '2' );
 	} );
 } );
