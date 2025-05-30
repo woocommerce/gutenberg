@@ -29,6 +29,30 @@ const isValidEvent = ( event: MouseEvent ) =>
 	! event.shiftKey &&
 	! event.defaultPrevented;
 
+/**
+ * Builds a callback function to test if a given attribute name corresponds to a
+ * `data-wp-on` or a `data-wp-on-async` directive for the given event type.
+ *
+ * @param event Event type.
+ * @return Callback function.
+ */
+const isWpOn = ( event: string ) => ( attrName: string ) =>
+	RegExp( `^data-wp-on(?:-async)?--${ event }(?:--([a-z0-9_-]+))?$` ).test(
+		attrName
+	);
+
+/**
+ * Determines whether the passed anchor element contains a `data-wp-on` or a
+ * `data-wp-on-async` directive for the given event type, returning `true` when
+ * it doesn't.
+ *
+ * @param event Event type to check.
+ * @param ref   An HTMLAnchorElement instance.
+ * @return Whether the pased element contains such a directive.
+ */
+const isLinkWithoutWpOn = ( event: string, ref: HTMLAnchorElement ) =>
+	! ref.getAttributeNames().some( isWpOn( event ) );
+
 // Add click and prefetch to all links.
 if ( clientNavigationMode === 'experimentalFullPage' ) {
 	// Navigate on click.
@@ -36,7 +60,11 @@ if ( clientNavigationMode === 'experimentalFullPage' ) {
 		'click',
 		async ( event ) => {
 			const ref = ( event.target as Element ).closest( 'a' );
-			if ( isValidLink( ref ) && isValidEvent( event ) ) {
+			if (
+				isValidLink( ref ) &&
+				isValidEvent( event ) &&
+				isLinkWithoutWpOn( 'click', ref )
+			) {
 				event.preventDefault();
 				const { actions } = await import(
 					'@wordpress/interactivity-router'
@@ -52,7 +80,11 @@ if ( clientNavigationMode === 'experimentalFullPage' ) {
 		async ( event ) => {
 			if ( ( event.target as Element )?.nodeName === 'A' ) {
 				const ref = ( event.target as Element ).closest( 'a' );
-				if ( isValidLink( ref ) && isValidEvent( event ) ) {
+				if (
+					isValidLink( ref ) &&
+					isValidEvent( event ) &&
+					isLinkWithoutWpOn( 'mouseenter', ref )
+				) {
 					const { actions } = await import(
 						'@wordpress/interactivity-router'
 					);
